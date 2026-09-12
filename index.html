@@ -127,7 +127,7 @@
         </div>
 
         <div class="bg-dark-bg/60 border-t border-dark-border px-4 sm:px-6 lg:px-8">
-            <div class="max-w-7xl mx-auto flex space-x-8">
+            <div class="max-w-7xl mx-auto flex space-x-6">
                 <button onclick="switchTab('calculator')" id="tab-calculator" class="tab-btn active border-b-2 border-gold-500 text-gold-400 py-3 text-sm font-medium flex items-center space-x-2 transition">
                     <i data-lucide="calculator" class="w-4 h-4"></i>
                     <span>Calculadora & Batch</span>
@@ -139,6 +139,10 @@
                 <button onclick="switchTab('formulas')" id="tab-formulas" class="tab-btn border-b-2 border-transparent text-gray-400 hover:text-gray-200 py-3 text-sm font-medium flex items-center space-x-2 transition">
                     <i data-lucide="book-open" class="w-4 h-4"></i>
                     <span>Caderno de Fórmulas</span>
+                </button>
+                <button onclick="switchTab('analytics')" id="tab-analytics" class="tab-btn border-b-2 border-transparent text-gray-400 hover:text-gray-200 py-3 text-sm font-medium flex items-center space-x-2 transition">
+                    <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+                    <span>Análise & Compras</span>
                 </button>
             </div>
         </div>
@@ -170,8 +174,8 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-medium text-gray-400 mb-1">Tamanho do Frasco Desejado (Gramos - g)</label>
-                        <input type="number" id="calcBatchSize" value="30" min="1" oninput="calculateBatch()" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold-500 text-gold-400 font-bold text-lg">
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Tamanho do Frasco Desejado (Gramas - g)</label>
+                        <input type="number" id="calcBatchSize" value="30" min="0.001" step="0.001" oninput="calculateBatch()" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold-500 text-gold-400 font-bold text-lg">
                     </div>
 
                     <div class="pt-2 grid grid-cols-2 gap-3">
@@ -188,7 +192,7 @@
                     <div class="pt-2 space-y-2">
                         <button onclick="deductBatchFromInventory()" class="w-full bg-gold-600 hover:bg-gold-500 text-black font-semibold py-2.5 px-4 rounded-lg text-sm transition flex items-center justify-center space-x-2 shadow-lg shadow-gold-600/20">
                             <i data-lucide="check-circle-2" class="w-4 h-4"></i>
-                            <span>Dar Baixa no Estoque (30g)</span>
+                            <span>Dar Baixa no Estoque</span>
                         </button>
                         <button onclick="saveCurrentFormula()" class="w-full bg-dark-input hover:bg-dark-border text-gray-200 border border-dark-border font-medium py-2 px-4 rounded-lg text-sm transition flex items-center justify-center space-x-2">
                             <i data-lucide="bookmark-plus" class="w-4 h-4"></i>
@@ -201,7 +205,7 @@
                     <div class="flex items-center justify-between">
                         <h2 class="text-base font-semibold text-white flex items-center space-x-2">
                             <i data-lucide="scale" class="w-5 h-5 text-gold-400"></i>
-                            <span>Pesagem na Balança (Soluções a 10%)</span>
+                            <span>Pesagem na Balança 0.001g (Soluções a 10%)</span>
                         </h2>
                         <button onclick="addCalcRow()" class="text-xs bg-dark-input hover:bg-dark-border text-gold-400 border border-dark-border px-3 py-1.5 rounded-lg transition flex items-center space-x-1">
                             <i data-lucide="plus" class="w-3.5 h-3.5"></i>
@@ -214,8 +218,8 @@
                             <thead class="bg-dark-input/60 text-gray-400 uppercase tracking-wider text-[10px]">
                                 <tr>
                                     <th class="p-3">Matéria-Prima (Diluída a 10%)</th>
-                                    <th class="p-3 w-28">% Proporção</th>
-                                    <th class="p-3 w-32">Pesar na Balança (g)</th>
+                                    <th class="p-3 w-32">% Proporção</th>
+                                    <th class="p-3 w-36">Pesar na Balança (g)</th>
                                     <th class="p-3 w-28">Estoque (10%)</th>
                                     <th class="p-3 w-24">Status</th>
                                     <th class="p-3 w-10 text-right"></th>
@@ -281,6 +285,35 @@
             </div>
         </section>
 
+        <!-- TAB 4: ANALYTICS & PURCHASING -->
+        <section id="content-analytics" class="tab-content hidden space-y-6">
+            <div class="bg-dark-card border border-dark-border rounded-xl p-5 space-y-4">
+                <div>
+                    <h2 class="text-base font-semibold text-white flex items-center space-x-2">
+                        <i data-lucide="shopping-cart" class="w-5 h-5 text-gold-400"></i>
+                        <span>Prioridade de Compras de Matérias-Primas</span>
+                    </h2>
+                    <p class="text-xs text-gray-400">Veja quais insumos são os mais usados em todas as suas fórmulas para otimizar suas compras</p>
+                </div>
+
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left text-xs text-gray-300">
+                        <thead class="bg-dark-input/60 text-gray-400 uppercase tracking-wider text-[10px]">
+                            <tr>
+                                <th class="p-3">Matéria-Prima</th>
+                                <th class="p-3">Nº de Fórmulas que Utilizam</th>
+                                <th class="p-3">Fórmulas Onde Aparece</th>
+                                <th class="p-3">Estoque Atual (10%)</th>
+                                <th class="p-3">Status de Compra</th>
+                            </tr>
+                        </thead>
+                        <tbody id="analyticsTableBody" class="divide-y divide-dark-border">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
     </main>
 
     <!-- Modal: Cadastrar / Editar Material -->
@@ -317,11 +350,11 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-medium text-gray-400 mb-1">Estoque da Solução 10% (g)</label>
-                        <input type="number" id="matStock" required value="0" min="0" step="0.01" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-gold-500">
+                        <input type="number" id="matStock" required value="0" min="0" step="0.001" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-gold-500">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-400 mb-1">Estoque Mínimo (g)</label>
-                        <input type="number" id="matMinStock" value="10" min="0" step="0.01" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-gold-500">
+                        <input type="number" id="matMinStock" value="10" min="0" step="0.001" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-gold-500">
                     </div>
                 </div>
 
@@ -359,6 +392,7 @@
                 inventory = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderInventoryTable();
                 updateCalcDropdowns();
+                renderAnalyticsTable();
                 calculateBatch();
             });
 
@@ -366,6 +400,7 @@
                 formulas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderFormulasDropdown();
                 renderFormulasGrid();
+                renderAnalyticsTable();
             });
         }
 
@@ -381,12 +416,16 @@
             activeBtn.classList.remove('border-transparent', 'text-gray-400');
 
             document.getElementById(`content-${tabId}`).classList.remove('hidden');
+
+            if (tabId === 'analytics') {
+                renderAnalyticsTable();
+            }
         }
 
-        // CALCULATOR ENGINE
+        // CALCULATOR ENGINE (Arredondamento para Balança 0.001g)
         function addCalcRow(name = '', percentage = 0) {
             const rowId = Date.now() + Math.random().toString(36).substring(2, 5);
-            calcRows.push({ id: rowId, name: name, percentage: percentage });
+            calcRows.push({ id: rowId, name: name, percentage: Number(percentage.toFixed(4)) });
             renderCalcRows();
         }
 
@@ -407,14 +446,14 @@
                     <td class="p-3">
                         <select onchange="updateCalcRowName('${row.id}', this.value)" class="calc-name-select w-full bg-dark-input border border-dark-border rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-gold-500">
                             <option value="">-- Selecione o Material --</option>
-                            ${inventory.map(m => `<option value="${m.name}" ${m.name === row.name ? 'selected' : ''}>${m.name} (${m.dilution || 10}%)</option>`).join('')}
+                            ${inventory.map(m => `<option value="${m.name}" ${m.name.toLowerCase() === row.name.toLowerCase() ? 'selected' : ''}>${m.name} (${m.dilution || 10}%)</option>`).join('')}
                         </select>
                     </td>
                     <td class="p-3">
-                        <input type="number" step="0.01" value="${row.percentage}" oninput="updateCalcRowPercentage('${row.id}', this.value)" class="w-full bg-dark-input border border-dark-border rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-gold-500">
+                        <input type="number" step="0.0001" value="${Number(row.percentage.toFixed(4))}" oninput="updateCalcRowPercentage('${row.id}', this.value)" class="w-full bg-dark-input border border-dark-border rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-gold-500">
                     </td>
-                    <td class="p-3 font-bold text-gold-400" id="weight-${row.id}">0.00 g</td>
-                    <td class="p-3 text-gray-400" id="stock-${row.id}">0.00 g</td>
+                    <td class="p-3 font-bold text-gold-400" id="weight-${row.id}">0.000 g</td>
+                    <td class="p-3 text-gray-400" id="stock-${row.id}">0.000 g</td>
                     <td class="p-3" id="status-${row.id}">-</td>
                     <td class="p-3 text-right">
                         <button onclick="removeCalcRow('${row.id}')" class="text-gray-500 hover:text-red-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
@@ -456,7 +495,7 @@
                 const statusElem = document.getElementById(`status-${row.id}`);
 
                 if (weightElem) weightElem.innerText = `${requiredWeight.toFixed(3)} g`;
-                if (stockElem) stockElem.innerText = `${availableStock.toFixed(2)} g`;
+                if (stockElem) stockElem.innerText = `${availableStock.toFixed(3)} g`;
 
                 if (statusElem) {
                     if (!row.name) {
@@ -470,7 +509,7 @@
                 }
             });
 
-            document.getElementById('calcTotalConc').innerText = `${totalPercentage.toFixed(2)}%`;
+            document.getElementById('calcTotalConc').innerText = `${Number(totalPercentage.toFixed(4))}%`;
             const statusBadge = document.getElementById('calcBatchStatus');
             
             if (isViable && calcRows.length > 0) {
@@ -521,8 +560,8 @@
                     <td class="p-3 font-semibold text-white">${item.name}</td>
                     <td class="p-3"><span class="bg-dark-input px-2 py-0.5 rounded border border-dark-border text-gray-300 text-[11px]">${item.category}</span></td>
                     <td class="p-3 text-gray-400">${item.dilution || 10}%</td>
-                    <td class="p-3 font-bold text-gold-400">${parseFloat(item.stock).toFixed(2)} g</td>
-                    <td class="p-3 text-gray-400">${parseFloat(item.minStock).toFixed(2)} g</td>
+                    <td class="p-3 font-bold text-gold-400">${parseFloat(item.stock).toFixed(3)} g</td>
+                    <td class="p-3 text-gray-400">${parseFloat(item.minStock).toFixed(3)} g</td>
                     <td class="p-3">
                         ${isLowStock ? '<span class="text-xs bg-red-950/60 text-red-400 border border-red-800/50 px-2 py-0.5 rounded font-medium">REPOR</span>' : '<span class="text-xs bg-emerald-950/60 text-emerald-400 border border-emerald-800/50 px-2 py-0.5 rounded font-medium">OK</span>'}
                     </td>
@@ -607,7 +646,7 @@
             const formulaData = {
                 name: name,
                 createdAt: new Date().toISOString(),
-                ingredients: calcRows.map(r => ({ name: r.name, percentage: r.percentage }))
+                ingredients: calcRows.map(r => ({ name: r.name, percentage: Number(r.percentage.toFixed(4)) }))
             };
 
             try {
@@ -640,7 +679,7 @@
             calcRows = formula.ingredients.map(ing => ({
                 id: Date.now() + Math.random().toString(36).substring(2, 5),
                 name: ing.name,
-                percentage: ing.percentage
+                percentage: Number(parseFloat(ing.percentage).toFixed(4))
             }));
 
             renderCalcRows();
@@ -658,12 +697,12 @@
                         <h3 class="font-bold text-white text-base">${f.name}</h3>
                         <button onclick="deleteFormula('${f.id}')" class="text-gray-500 hover:text-red-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </div>
-                    <ul class="space-y-1.5 text-xs text-gray-300">
-                        ${f.ingredients.map(i => `<li class="flex justify-between"><span>${i.name}</span><span class="font-semibold text-gold-400">${i.percentage}%</span></li>`).join('')}
+                    <ul class="space-y-1.5 text-xs text-gray-300 max-h-48 overflow-y-auto custom-scrollbar pr-1">
+                        ${f.ingredients.map(i => `<li class="flex justify-between"><span>${i.name}</span><span class="font-semibold text-gold-400">${Number(parseFloat(i.percentage).toFixed(4))}%</span></li>`).join('')}
                     </ul>
                     <button onclick="loadFormulaDirectly('${f.id}')" class="w-full bg-dark-input hover:bg-dark-border text-gold-400 border border-dark-border text-xs py-2 rounded-lg font-medium transition flex items-center justify-center space-x-1">
                         <i data-lucide="calculator" class="w-3.5 h-3.5"></i>
-                        <span>Carregar na Calculadora (30g)</span>
+                        <span>Carregar na Calculadora</span>
                     </button>
                 `;
                 container.appendChild(card);
@@ -689,7 +728,64 @@
             }
         }
 
-        // LEITOR INTELIGENTE SEM DUPLICAÇÃO E COM ESTOQUE ZERO
+        // NOVO PAINEL DE ANÁLISE DE MATERIAIS IGUAIS ENTRE FÓRMULAS
+        function renderAnalyticsTable() {
+            const tbody = document.getElementById('analyticsTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            const materialUsageMap = {};
+
+            formulas.forEach(formula => {
+                formula.ingredients.forEach(ing => {
+                    const nameKey = ing.name.trim();
+                    if (!materialUsageMap[nameKey]) {
+                        materialUsageMap[nameKey] = {
+                            name: nameKey,
+                            formulas: []
+                        };
+                    }
+                    if (!materialUsageMap[nameKey].formulas.includes(formula.name)) {
+                        materialUsageMap[nameKey].formulas.push(formula.name);
+                    }
+                });
+            });
+
+            const sortedMaterials = Object.values(materialUsageMap).sort((a, b) => b.formulas.length - a.formulas.length);
+
+            if (sortedMaterials.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500">Nenhuma fórmula importada ainda. Importe planilhas Excel para ver o ranking de compra.</td></tr>`;
+                return;
+            }
+
+            sortedMaterials.forEach(item => {
+                const matInInv = inventory.find(i => i.name.toLowerCase() === item.name.toLowerCase());
+                const currentStock = matInInv ? parseFloat(matInInv.stock) : 0;
+                const isZeroStock = currentStock === 0;
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-dark-input/40 transition";
+                tr.innerHTML = `
+                    <td class="p-3 font-semibold text-white">${item.name}</td>
+                    <td class="p-3">
+                        <span class="bg-gold-500/10 text-gold-400 border border-gold-500/30 font-bold px-2.5 py-1 rounded-full text-xs">
+                            ${item.formulas.length} ${item.formulas.length === 1 ? 'fórmula' : 'fórmulas'}
+                        </span>
+                    </td>
+                    <td class="p-3 text-gray-300 text-xs">${item.formulas.join(', ')}</td>
+                    <td class="p-3 font-bold ${isZeroStock ? 'text-red-400' : 'text-gold-400'}">${currentStock.toFixed(3)} g</td>
+                    <td class="p-3">
+                        ${isZeroStock ? 
+                            `<span class="text-xs bg-red-950/80 text-red-400 border border-red-800/60 px-2 py-0.5 rounded font-bold">COMPRA PRIORITÁRIA (${item.formulas.length}x)</span>` : 
+                            `<span class="text-xs bg-emerald-950/60 text-emerald-400 border border-emerald-800/50 px-2 py-0.5 rounded font-medium">EM ESTOQUE</span>`
+                        }
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // LEITOR INTELIGENTE GCMS EXCEL (Limpeza de dízimas na importação)
         function exportBackup() {
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ inventory, formulas }, null, 2));
             const dlAnchorElem = document.createElement('a');
@@ -760,18 +856,17 @@
                             }
 
                             if (isReadingData && rawName && !isNaN(rawVal)) {
-                                const percentage = rawVal / 10;
+                                // Arredonda para 4 casas decimais para remover dizimas flutuantes do JavaScript
+                                const percentage = Number((rawVal / 10).toFixed(4));
 
-                                // Verifica se o ingrediente JÁ existe no estoque (ignorando maiúsculas/minúsculas)
                                 const exists = inventory.find(inv => inv.name.toLowerCase() === rawName.toLowerCase());
                                 
-                                // Se NÃO existir no banco de dados, cadastra com ESTOQUE = 0g
                                 if (!exists) {
                                     await addDoc(collection(window.db, "inventory"), {
                                         name: rawName,
                                         category: 'Sintético / OE',
                                         dilution: 10,
-                                        stock: 0, // INICIA COM 0g EM ESTOQUE
+                                        stock: 0,
                                         minStock: 10
                                     });
                                 }
@@ -790,7 +885,7 @@
                                 ingredients: formulaIngredients
                             });
 
-                            alert(`Fórmula "${formulaName}" importada com sucesso!\nOs novos materiais foram salvos no seu catálogo com estoque zerado (0g) sem duplicar os materiais existentes.`);
+                            alert(`Fórmula "${formulaName}" importada com sucesso!\nOs novos materiais foram salvos com estoque zerado e arredondados para alta precisão.`);
                         } else {
                             alert('Não foi possível identificar a estrutura GCMS na planilha.');
                         }
