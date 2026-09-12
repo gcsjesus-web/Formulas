@@ -117,9 +117,10 @@
                         <button onclick="exportBackup()" title="Exportar Backup (JSON)" class="p-2 text-gray-400 hover:text-white rounded-md hover:bg-dark-border transition">
                             <i data-lucide="download" class="w-4 h-4"></i>
                         </button>
-                        <label title="Importar Excel GCMS (.xlsx)" class="p-2 text-gray-400 hover:text-white rounded-md hover:bg-dark-border transition cursor-pointer">
+                        <!-- MULTIPLE FILES ACCEPTED HERE -->
+                        <label title="Importar Várias Fórmulas (.xlsx)" class="p-2 text-gray-400 hover:text-white rounded-md hover:bg-dark-border transition cursor-pointer">
                             <i data-lucide="upload" class="w-4 h-4"></i>
-                            <input type="file" id="importFileInput" accept=".json,.xlsx,.xls" class="hidden" onchange="handleFileImport(event)">
+                            <input type="file" id="importFileInput" accept=".json,.xlsx,.xls" multiple class="hidden" onchange="handleFileImport(event)">
                         </label>
                     </div>
                 </div>
@@ -174,7 +175,7 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-medium text-gray-400 mb-1">Tamanho do Frasco Desejado (Gramas - g)</label>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Tamanho do Frasco Desejado (Gramos - g)</label>
                         <input type="number" id="calcBatchSize" value="30" min="0.001" step="0.001" oninput="calculateBatch()" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold-500 text-gold-400 font-bold text-lg">
                     </div>
 
@@ -422,7 +423,7 @@
             }
         }
 
-        // CALCULATOR ENGINE (Arredondamento para Balança 0.001g)
+        // CALCULATOR ENGINE
         function addCalcRow(name = '', percentage = 0) {
             const rowId = Date.now() + Math.random().toString(36).substring(2, 5);
             calcRows.push({ id: rowId, name: name, percentage: Number(percentage.toFixed(4)) });
@@ -728,7 +729,7 @@
             }
         }
 
-        // NOVO PAINEL DE ANÁLISE DE MATERIAIS IGUAIS ENTRE FÓRMULAS
+        // ANALYTICS & PURCHASING
         function renderAnalyticsTable() {
             const tbody = document.getElementById('analyticsTableBody');
             if (!tbody) return;
@@ -785,7 +786,7 @@
             });
         }
 
-        // LEITOR INTELIGENTE GCMS EXCEL (Limpeza de dízimas na importação)
+        // LEITOR INTELIGENTE MULTI-ARQUIVOS E MULTI-ABAS
         function exportBackup() {
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ inventory, formulas }, null, 2));
             const dlAnchorElem = document.createElement('a');
@@ -794,109 +795,119 @@
             dlAnchorElem.click();
         }
 
-        function handleFileImport(e) {
-            const file = e.target.files[0];
-            if (!file) return;
+        async function processSingleWorksheet(worksheet, formulaName) {
+            const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            if (rows.length === 0) return null;
 
-            const fileName = file.name.toLowerCase();
+            let formulaIngredients = [];
+            let isReadingData = false;
 
-            if (fileName.endsWith('.json')) {
-                const reader = new FileReader();
-                reader.onload = async (event) => {
-                    try {
-                        const data = JSON.parse(event.target.result);
-                        const { collection, addDoc } = window.firestoreTools;
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i];
+                if (!row || row.length === 0) continue;
 
-                        if (data.inventory) {
-                            for (let item of data.inventory) {
-                                delete item.id;
-                                await addDoc(collection(window.db, "inventory"), item);
-                            }
-                        }
-                        alert('Backup JSON importado com sucesso!');
-                    } catch (err) {
-                        alert('Erro ao ler arquivo JSON: ' + err.message);
+                const rawName = String(row[0] || '').trim();
+                const rawVal = parseFloat(row[1]);
+
+                if (rawName.toLowerCase().includes('product name')) {
+                    isReadingData = true;
+                    continue;
+                }
+
+                if (rawName.toLowerCase() === 'total') {
+                    isReadingData = false;
+                    break;
+                }
+
+                if (isReadingData && rawName && !isNaN(rawVal)) {
+                    const percentage = Number((rawVal / 10).toFixed(4));
+                    const { collection, addDoc } = window.firestoreTools;
+
+                    const exists = inventory.find(inv => inv.name.toLowerCase() === rawName.toLowerCase());
+                    
+                    if (!exists) {
+                        await addDoc(collection(window.db, "inventory"), {
+                            name: rawName,
+                            category: 'Sintético / OE',
+                            dilution: 10,
+                            stock: 0,
+                            minStock: 10
+                        });
                     }
-                };
-                reader.readAsText(file);
-            } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
-                const reader = new FileReader();
-                reader.onload = async (event) => {
-                    try {
-                        const data = new Uint8Array(event.target.result);
-                        const workbook = XLSX.read(data, { type: 'array' });
-                        const firstSheetName = workbook.SheetNames[0];
-                        const worksheet = workbook.Sheets[firstSheetName];
-                        
-                        const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-                        
-                        if (rows.length === 0) return alert('Planilha vazia.');
 
-                        const { collection, addDoc } = window.firestoreTools;
-                        let formulaIngredients = [];
-                        let isReadingData = false;
-
-                        const formulaName = file.name.replace(/\.[^/.]+$/, "");
-
-                        for (let i = 0; i < rows.length; i++) {
-                            const row = rows[i];
-                            if (!row || row.length === 0) continue;
-
-                            const rawName = String(row[0] || '').trim();
-                            const rawVal = parseFloat(row[1]);
-
-                            if (rawName.toLowerCase().includes('product name')) {
-                                isReadingData = true;
-                                continue;
-                            }
-
-                            if (rawName.toLowerCase() === 'total') {
-                                isReadingData = false;
-                                break;
-                            }
-
-                            if (isReadingData && rawName && !isNaN(rawVal)) {
-                                // Arredonda para 4 casas decimais para remover dizimas flutuantes do JavaScript
-                                const percentage = Number((rawVal / 10).toFixed(4));
-
-                                const exists = inventory.find(inv => inv.name.toLowerCase() === rawName.toLowerCase());
-                                
-                                if (!exists) {
-                                    await addDoc(collection(window.db, "inventory"), {
-                                        name: rawName,
-                                        category: 'Sintético / OE',
-                                        dilution: 10,
-                                        stock: 0,
-                                        minStock: 10
-                                    });
-                                }
-
-                                formulaIngredients.push({
-                                    name: exists ? exists.name : rawName,
-                                    percentage: percentage
-                                });
-                            }
-                        }
-
-                        if (formulaIngredients.length > 0) {
-                            await addDoc(collection(window.db, "formulas"), {
-                                name: formulaName,
-                                createdAt: new Date().toISOString(),
-                                ingredients: formulaIngredients
-                            });
-
-                            alert(`Fórmula "${formulaName}" importada com sucesso!\nOs novos materiais foram salvos com estoque zerado e arredondados para alta precisão.`);
-                        } else {
-                            alert('Não foi possível identificar a estrutura GCMS na planilha.');
-                        }
-
-                    } catch (err) {
-                        console.error(err);
-                        alert('Erro ao ler a planilha: ' + err.message);
-                    }
-                };
-                reader.readAsArrayBuffer(file);
+                    formulaIngredients.push({
+                        name: exists ? exists.name : rawName,
+                        percentage: percentage
+                    });
+                }
             }
+
+            if (formulaIngredients.length > 0) {
+                const { collection, addDoc } = window.firestoreTools;
+                await addDoc(collection(window.db, "formulas"), {
+                    name: formulaName,
+                    createdAt: new Date().toISOString(),
+                    ingredients: formulaIngredients
+                });
+                return formulaIngredients.length;
+            }
+            return null;
+        }
+
+        async function handleFileImport(e) {
+            const files = e.target.files;
+            if (!files || files.length === 0) return;
+
+            let importedFormulasCount = 0;
+
+            for (let file of files) {
+                const fileName = file.name.toLowerCase();
+
+                if (fileName.endsWith('.json')) {
+                    const reader = new FileReader();
+                    reader.onload = async (event) => {
+                        try {
+                            const data = JSON.parse(event.target.result);
+                            const { collection, addDoc } = window.firestoreTools;
+
+                            if (data.inventory) {
+                                for (let item of data.inventory) {
+                                    delete item.id;
+                                    await addDoc(collection(window.db, "inventory"), item);
+                                }
+                            }
+                        } catch (err) {
+                            console.error('Erro ao ler JSON:', err);
+                        }
+                    };
+                    reader.readAsText(file);
+                } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+                    await new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onload = async (event) => {
+                            try {
+                                const data = new Uint8Array(event.target.result);
+                                const workbook = XLSX.read(data, { type: 'array' });
+                                
+                                const baseFileName = file.name.replace(/\.[^/.]+$/, "");
+
+                                for (let sheetName of workbook.SheetNames) {
+                                    const worksheet = workbook.Sheets[sheetName];
+                                    const formulaName = workbook.SheetNames.length > 1 ? `${baseFileName} - ${sheetName}` : baseFileName;
+                                    const ingCount = await processSingleWorksheet(worksheet, formulaName);
+                                    if (ingCount) importedFormulasCount++;
+                                }
+                            } catch (err) {
+                                console.error('Erro ao ler planilha:', err);
+                            }
+                            resolve();
+                        };
+                        reader.readAsArrayBuffer(file);
+                    });
+                }
+            }
+
+            alert(`Importação concluída!\nForam adicionadas ${importedFormulasCount} fórmula(s) ao seu banco de dados na nuvem com os materiais organizados no Estoque.`);
         }
 
         function updateCalcDropdowns() {
