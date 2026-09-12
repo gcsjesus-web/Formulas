@@ -1,887 +1,767 @@
 <!DOCTYPE html>
-<html lang="pt-BR" class="h-full bg-slate-950 text-slate-100">
+<html lang="pt-BR" class="dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Maison GJ - Formulação & Estoque</title>
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- Fontes Google Inter & Playfair Display -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
-  
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            serif: ['Playfair Display', 'serif'],
-          },
-          colors: {
-            amber: {
-              400: '#fbbf24',
-              500: '#f59e0b',
-              600: '#d97706',
-              900: '#78350f',
-            },
-            gold: {
-              300: '#fde68a',
-              400: '#facc15',
-              500: '#eab308',
-              600: '#ca8a04',
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maison GJ - Formulação & Estoque</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        gold: {
+                            50: '#fffbf0',
+                            100: '#fff4d6',
+                            200: '#ffe5ad',
+                            300: '#ffd27a',
+                            400: '#ffb942',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                            700: '#b45309',
+                            800: '#92400e',
+                            900: '#78350f',
+                            950: '#451a03',
+                        },
+                        dark: {
+                            bg: '#0c0f17',
+                            card: '#151b28',
+                            border: '#232d42',
+                            input: '#1c2436'
+                        }
+                    }
+                }
             }
-          }
         }
-      }
-    }
-  </script>
-  <style>
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #0f172a;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #334155;
-      border-radius: 4px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #ca8a04;
-    }
-  </style>
+    </script>
+
+    <!-- SheetJS para ler e importar planilhas Excel .xlsx -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body {
+            background-color: #0c0f17;
+            color: #f3f4f6;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #151b28;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #232d42;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #d97706;
+        }
+    </style>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { 
+            getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, onSnapshot 
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // Configuração do seu Projeto Firebase "Formulas"
+        const firebaseConfig = {
+            apiKey: "AIzaSyDJS_3CGvghOewTLmC1QIMCmOsz09Q3kMk",
+            authDomain: "formulas-cd63e.firebaseapp.com",
+            projectId: "formulas-cd63e",
+            storageBucket: "formulas-cd63e.firebasestorage.app",
+            messagingSenderId: "588365542011",
+            appId: "1:588365542011:web:b6a889a3699eb1b6e368de",
+            measurementId: "G-LWZ7PXTZ19"
+        };
+
+        // Inicializa Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Disponibiliza db globalmente para o script
+        window.db = db;
+        window.firestoreTools = { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, onSnapshot };
+    </script>
 </head>
-<body class="h-full font-sans antialiased bg-slate-950 text-slate-200 flex flex-col selection:bg-amber-500/30 selection:text-amber-300">
+<body class="min-h-screen flex flex-col antialiased selection:bg-gold-500 selection:text-black">
 
-  <!-- Top Navigation Header -->
-  <header class="border-b border-amber-900/30 bg-slate-900/80 backdrop-blur sticky top-0 z-40">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between h-16">
-        <!-- Logo Brand -->
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-600 to-amber-300 p-0.5 shadow-lg shadow-amber-900/20">
-            <div class="w-full h-full bg-slate-950 rounded-full flex items-center justify-center">
-              <i data-lucide="flask-conical" class="w-5 h-5 text-amber-400"></i>
+    <!-- Top Navigation -->
+    <header class="bg-dark-card border-b border-dark-border sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo / Title -->
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-lg bg-gradient-to-tr from-gold-600 to-gold-400 flex items-center justify-center text-black font-bold shadow-lg shadow-gold-600/20">
+                        <i data-lucide="flask-conical" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg text-white tracking-wide">MAISON GJ</h1>
+                        <p class="text-xs text-gold-400 font-medium">Formulação & Controle de Estoque</p>
+                    </div>
+                </div>
+
+                <!-- Sync Status & Cloud Indicator -->
+                <div class="flex items-center space-x-4">
+                    <div id="syncStatus" class="flex items-center space-x-2 text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-800/50 px-3 py-1.5 rounded-full">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span class="hidden sm:inline font-medium">Nuvem Sincronizada</span>
+                    </div>
+
+                    <!-- Backup Buttons -->
+                    <div class="flex items-center space-x-1 bg-dark-input p-1 rounded-lg border border-dark-border">
+                        <button onclick="exportBackup()" title="Exportar Backup (JSON)" class="p-2 text-gray-400 hover:text-white rounded-md hover:bg-dark-border transition">
+                            <i data-lucide="download" class="w-4 h-4"></i>
+                        </button>
+                        <label title="Importar Backup (JSON ou XLSX Excel)" class="p-2 text-gray-400 hover:text-white rounded-md hover:bg-dark-border transition cursor-pointer">
+                            <i data-lucide="upload" class="w-4 h-4"></i>
+                            <input type="file" id="importFileInput" accept=".json,.xlsx,.xls" class="hidden" onchange="handleFileImport(event)">
+                        </label>
+                    </div>
+                </div>
             </div>
-          </div>
-          <div>
-            <h1 class="font-serif text-lg font-bold text-amber-200 tracking-wide">Maison GJ</h1>
-            <p class="text-[10px] uppercase tracking-widest text-slate-400 font-medium">Formulação & Estoque</p>
-          </div>
         </div>
 
-        <!-- Action & Tab Buttons -->
-        <div class="flex items-center gap-2">
-          <button onclick="exportarDados()" title="Exportar Backup (JSON)" class="p-2 text-slate-400 hover:text-amber-300 hover:bg-slate-800 rounded-lg transition-all">
-            <i data-lucide="download" class="w-4 h-4"></i>
-          </button>
-          <label title="Importar Backup" class="p-2 text-slate-400 hover:text-amber-300 hover:bg-slate-800 rounded-lg transition-all cursor-pointer">
-            <i data-lucide="upload" class="w-4 h-4"></i>
-            <input type="file" id="import-file" accept=".json" onchange="importarDados(event)" class="hidden">
-          </label>
-
-          <nav class="flex space-x-1 sm:space-x-4 border-l border-slate-800 pl-2 sm:pl-4">
-            <button onclick="switchTab('estoque')" id="tab-btn-estoque" class="tab-btn flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 text-amber-400 bg-slate-800/80 border border-amber-500/30">
-              <i data-lucide="boxes" class="w-4 h-4"></i>
-              <span class="hidden sm:inline">Estoque</span>
-            </button>
-            <button onclick="switchTab('calculadora')" id="tab-btn-calculadora" class="tab-btn flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50">
-              <i data-lucide="calculator" class="w-4 h-4"></i>
-              <span class="hidden sm:inline">Calculadora</span>
-            </button>
-            <button onclick="switchTab('biblioteca')" id="tab-btn-biblioteca" class="tab-btn flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50">
-              <i data-lucide="book-open" class="w-4 h-4"></i>
-              <span class="hidden sm:inline">Caderno</span>
-            </button>
-          </nav>
+        <!-- Navigation Tabs -->
+        <div class="bg-dark-bg/60 border-t border-dark-border px-4 sm:px-6 lg:px-8">
+            <div class="max-w-7xl mx-auto flex space-x-8">
+                <button onclick="switchTab('calculator')" id="tab-calculator" class="tab-btn active border-b-2 border-gold-500 text-gold-400 py-3 text-sm font-medium flex items-center space-x-2 transition">
+                    <i data-lucide="calculator" class="w-4 h-4"></i>
+                    <span>Calculadora & Batch</span>
+                </button>
+                <button onclick="switchTab('inventory')" id="tab-inventory" class="tab-btn border-b-2 border-transparent text-gray-400 hover:text-gray-200 py-3 text-sm font-medium flex items-center space-x-2 transition">
+                    <i data-lucide="boxes" class="w-4 h-4"></i>
+                    <span>Estoque de Materiais</span>
+                </button>
+                <button onclick="switchTab('formulas')" id="tab-formulas" class="tab-btn border-b-2 border-transparent text-gray-400 hover:text-gray-200 py-3 text-sm font-medium flex items-center space-x-2 transition">
+                    <i data-lucide="book-open" class="w-4 h-4"></i>
+                    <span>Caderno de Fórmulas</span>
+                </button>
+            </div>
         </div>
-      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- TAB 1: CALCULATOR & BATCH -->
+        <section id="content-calculator" class="tab-content space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- Batch Control Panel -->
+                <div class="lg:col-span-1 bg-dark-card border border-dark-border rounded-xl p-5 space-y-4 h-fit">
+                    <h2 class="text-base font-semibold text-white flex items-center space-x-2">
+                        <i data-lucide="sliders" class="w-5 h-5 text-gold-400"></i>
+                        <span>Parâmetros da Produção</span>
+                    </h2>
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Selecione uma Fórmula Cadastrada</label>
+                        <select id="calcFormulaSelect" onchange="loadFormulaIntoCalculator()" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold-500">
+                            <option value="">-- Nova Fórmula do Zero --</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Nome do Lote / Fragrância</label>
+                        <input type="text" id="calcBatchName" placeholder="Ex: Acordo Cítrico № 4" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Tamanho do Lote Desejado (Gramos - g)</label>
+                        <input type="number" id="calcBatchSize" value="100" min="1" oninput="calculateBatch()" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold-500 text-gold-400 font-bold text-lg">
+                    </div>
+
+                    <!-- Batch Summary Cards -->
+                    <div class="pt-2 grid grid-cols-2 gap-3">
+                        <div class="bg-dark-bg/80 border border-dark-border rounded-lg p-3 text-center">
+                            <span class="block text-xs text-gray-400">Concentração Total</span>
+                            <span id="calcTotalConc" class="text-lg font-bold text-white">0%</span>
+                        </div>
+                        <div class="bg-dark-bg/80 border border-dark-border rounded-lg p-3 text-center">
+                            <span class="block text-xs text-gray-400">Status do Lote</span>
+                            <span id="calcBatchStatus" class="text-xs font-bold text-emerald-400 mt-1 block">PRONTO</span>
+                        </div>
+                    </div>
+
+                    <div class="pt-2 space-y-2">
+                        <button onclick="deductBatchFromInventory()" class="w-full bg-gold-600 hover:bg-gold-500 text-black font-semibold py-2.5 px-4 rounded-lg text-sm transition flex items-center justify-center space-x-2 shadow-lg shadow-gold-600/20">
+                            <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                            <span>Concluir e Dar Baixa no Estoque</span>
+                        </button>
+                        <button onclick="saveCurrentFormula()" class="w-full bg-dark-input hover:bg-dark-border text-gray-200 border border-dark-border font-medium py-2 px-4 rounded-lg text-sm transition flex items-center justify-center space-x-2">
+                            <i data-lucide="bookmark-plus" class="w-4 h-4"></i>
+                            <span>Salvar no Caderno de Fórmulas</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Formula Table -->
+                <div class="lg:col-span-2 bg-dark-card border border-dark-border rounded-xl p-5 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-base font-semibold text-white flex items-center space-x-2">
+                            <i data-lucide="scale" class="w-5 h-5 text-gold-400"></i>
+                            <span>Composição e Pesagem do Lote</span>
+                        </h2>
+                        <button onclick="addCalcRow()" class="text-xs bg-dark-input hover:bg-dark-border text-gold-400 border border-dark-border px-3 py-1.5 rounded-lg transition flex items-center space-x-1">
+                            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                            <span>Adicionar Ingrediente</span>
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-left text-xs text-gray-300">
+                            <thead class="bg-dark-input/60 text-gray-400 uppercase tracking-wider text-[10px]">
+                                <tr>
+                                    <th class="p-3">Matéria-Prima / Insumo</th>
+                                    <th class="p-3 w-28">% Proporção</th>
+                                    <th class="p-3 w-28">Peso Balança (g)</th>
+                                    <th class="p-3 w-28">Estoque Disponível</th>
+                                    <th class="p-3 w-24">Viabilidade</th>
+                                    <th class="p-3 w-10 text-right"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="calcTableBody" class="divide-y divide-dark-border">
+                                <!-- Dynamic rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- TAB 2: INVENTORY MANAGEMENT -->
+        <section id="content-inventory" class="tab-content hidden space-y-6">
+            <div class="bg-dark-card border border-dark-border rounded-xl p-5 space-y-5">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-base font-semibold text-white">Estoque de Matérias-Primas</h2>
+                        <p class="text-xs text-gray-400">Gerencie o saldo e disponibilidade dos seus insumos aromáticos</p>
+                    </div>
+
+                    <div class="flex items-center space-x-3">
+                        <input type="text" id="inventorySearch" oninput="renderInventoryTable()" placeholder="Buscar material..." class="bg-dark-input border border-dark-border rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-gold-500 w-48">
+                        <button onclick="openAddMaterialModal()" class="bg-gold-600 hover:bg-gold-500 text-black font-semibold px-4 py-2 rounded-lg text-xs transition flex items-center space-x-1">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                            <span>Cadastrar Novo Material</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left text-xs text-gray-300">
+                        <thead class="bg-dark-input/60 text-gray-400 uppercase tracking-wider text-[10px]">
+                            <tr>
+                                <th class="p-3">Nome da Matéria-Prima</th>
+                                <th class="p-3">Categoria / Família</th>
+                                <th class="p-3">Diluição %</th>
+                                <th class="p-3">Estoque Atual (g)</th>
+                                <th class="p-3">Estoque Mínimo (g)</th>
+                                <th class="p-3">Status</th>
+                                <th class="p-3 text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryTableBody" class="divide-y divide-dark-border">
+                            <!-- Dynamic rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: FORMULAS JOURNAL -->
+        <section id="content-formulas" class="tab-content hidden space-y-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-base font-semibold text-white">Caderno de Fórmulas</h2>
+                    <p class="text-xs text-gray-400">Sua biblioteca pessoal de criações olfativas</p>
+                </div>
+            </div>
+
+            <div id="formulasGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <!-- Formula Cards -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal: Cadastrar / Editar Material -->
+    <div id="materialModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-dark-card border border-dark-border rounded-xl w-full max-w-md p-6 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-dark-border pb-3">
+                <h3 id="modalMaterialTitle" class="text-sm font-semibold text-white">Cadastrar Novo Insumo</h3>
+                <button onclick="closeMaterialModal()" class="text-gray-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            
+            <form id="materialForm" onsubmit="handleSaveMaterial(event)" class="space-y-3">
+                <input type="hidden" id="materialId">
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-1">Nome do Insumo</label>
+                    <input type="text" id="matName" required placeholder="Ex: Iso E Super" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-gold-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Categoria</label>
+                        <select id="matCategory" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-gold-500">
+                            <option value="Sintético">Sintético</option>
+                            <option value="Óleo Essencial">Óleo Essencial</option>
+                            <option value="Solvente/Álcool">Solvente/Álcool</option>
+                            <option value="Acordo/Base">Acordo/Base</option>
+                            <option value="Absoluto">Absoluto</option>
+                            <option value="Outro">Outro</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Concentração/Diluição %</label>
+                        <input type="number" id="matDilution" value="100" min="0.1" max="100" step="0.1" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-gold-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Quantidade em Estoque (g)</label>
+                        <input type="number" id="matStock" required value="0" min="0" step="0.01" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-gold-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Estoque Mínimo (Alerta g)</label>
+                        <input type="number" id="matMinStock" value="10" min="0" step="0.01" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-gold-500">
+                    </div>
+                </div>
+
+                <div class="pt-3 flex justify-end space-x-2">
+                    <button type="button" onclick="closeMaterialModal()" class="px-4 py-2 bg-dark-input border border-dark-border text-gray-300 rounded-lg text-xs hover:bg-dark-border">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-gold-600 hover:bg-gold-500 text-black font-semibold rounded-lg text-xs">Salvar Insumo</button>
+                </div>
+            </form>
+        </div>
     </div>
-  </header>
 
-  <!-- Notification Toast container -->
-  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm pointer-events-none"></div>
+    <!-- Application Script Logic -->
+    <script>
+        // State variables
+        let inventory = [];
+        let formulas = [];
+        let calcRows = [];
 
-  <!-- Main Content Container -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        // App Initialization
+        window.addEventListener('load', () => {
+            lucide.createIcons();
 
-    <!-- SECTION 1: ESTOQUE DE MATÉRIAS-PRIMAS -->
-    <section id="section-estoque" class="tab-section space-y-6">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
-        <div>
-          <h2 class="font-serif text-2xl font-bold text-slate-100 flex items-center gap-2">
-            Inventário de Matérias-Primas
-          </h2>
-          <p class="text-sm text-slate-400">Gerencie seus óleos essenciais, absolutos, sintéticos e solventes.</p>
-        </div>
-        <div class="flex items-center gap-3">
-          <div class="relative flex-1 sm:w-64">
-            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-            <input type="text" id="search-estoque" oninput="renderEstoque()" placeholder="Buscar matéria-prima..." class="w-full bg-slate-900 border border-slate-800 rounded-lg pl-9 pr-4 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500/50">
-          </div>
-          <button onclick="openModalMaterial()" class="flex items-center gap-2 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-950 font-semibold px-4 py-2 rounded-lg text-sm transition-all shadow-md shadow-amber-950/40">
-            <i data-lucide="plus" class="w-4 h-4"></i>
-            <span>Novo Insumo</span>
-          </button>
-        </div>
-      </div>
+            // Aguarda inicialização do Firebase
+            const checkFirebase = setInterval(() => {
+                if (window.db) {
+                    clearInterval(checkFirebase);
+                    initFirebaseListeners();
+                }
+            }, 100);
 
-      <!-- Inventory Metrics Cards -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-xl">
-          <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Total de Itens</p>
-          <p class="text-2xl font-bold text-slate-100 mt-1" id="stat-total-itens">0</p>
-        </div>
-        <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-xl">
-          <p class="text-xs font-medium text-amber-400 uppercase tracking-wider">Notas de Fundo/Fixação</p>
-          <p class="text-2xl font-bold text-amber-300 mt-1" id="stat-fundo-itens">0</p>
-        </div>
-        <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-xl">
-          <p class="text-xs font-medium text-emerald-400 uppercase tracking-wider">Solventes & Veículos</p>
-          <p class="text-2xl font-bold text-emerald-300 mt-1" id="stat-solventes-itens">0</p>
-        </div>
-        <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-xl">
-          <p class="text-xs font-medium text-rose-400 uppercase tracking-wider">Estoque Alerta/Baixo</p>
-          <p class="text-2xl font-bold text-rose-400 mt-1" id="stat-alerta-itens">0</p>
-        </div>
-      </div>
-
-      <!-- Inventory Table -->
-      <div class="bg-slate-900/80 border border-slate-800 rounded-xl overflow-hidden shadow-xl">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse">
-            <thead>
-              <tr class="bg-slate-950/60 border-b border-slate-800 text-xs text-slate-400 uppercase tracking-wider">
-                <th class="py-3 px-4">Nome da Matéria-Prima</th>
-                <th class="py-3 px-4">Categoria / Nota</th>
-                <th class="py-3 px-4 text-right">Qtd Atual (g/mL)</th>
-                <th class="py-3 px-4 text-right">Qtd Mínima (g/mL)</th>
-                <th class="py-3 px-4 text-center">Status</th>
-                <th class="py-3 px-4 text-right">Ações</th>
-              </tr>
-            </thead>
-            <tbody id="tabla-estoque-body" class="divide-y divide-slate-800/60 text-sm">
-              <!-- Rendered via JS -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- SECTION 2: CALCULADORA DE FÓRMULAS & BATCHES -->
-    <section id="section-calculadora" class="tab-section space-y-6 hidden">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
-        <div>
-          <h2 class="font-serif text-2xl font-bold text-slate-100 flex items-center gap-2">
-            Calculadora de Lotes & Dosagem
-          </h2>
-          <p class="text-sm text-slate-400">Defina o tamanho do lote e veja o peso exato a ser medido na balança.</p>
-        </div>
-        <div class="flex items-center gap-3">
-          <button onclick="limparCalculadora()" class="px-3 py-2 text-xs font-medium text-slate-400 hover:text-slate-200 border border-slate-800 hover:bg-slate-800 rounded-lg transition-all">
-            Limpar Tela
-          </button>
-          <button onclick="abrirModalSalvarFormula()" class="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 font-medium px-4 py-2 rounded-lg text-sm transition-all">
-            <i data-lucide="bookmark" class="w-4 h-4"></i>
-            <span>Salvar no Caderno</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Configuration & Setup Card -->
-        <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-5 space-y-4 h-fit shadow-xl">
-          <h3 class="font-serif text-lg font-semibold text-amber-300 border-b border-slate-800 pb-2 flex items-center justify-between">
-            <span>Parâmetros da Mistura</span>
-            <i data-lucide="sliders" class="w-4 h-4 text-slate-500"></i>
-          </h3>
-
-          <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Nome da Fórmula Atual</label>
-            <input type="text" id="calc-nome-formula" placeholder="Ex: Eau de Parfum Cítrico Amadeirado" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500">
-          </div>
-
-          <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Tamanho do Lote Total a Produzir (g)</label>
-            <div class="relative">
-              <input type="number" id="calc-tamanho-lote" value="100" min="1" step="0.1" oninput="calcularLote()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-lg font-bold text-amber-300 focus:outline-none focus:border-amber-500 pr-12">
-              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-500">g</span>
-            </div>
-          </div>
-
-          <!-- Total Percentage Counter -->
-          <div class="bg-slate-950/70 p-4 rounded-lg border border-slate-800/80 space-y-2">
-            <div class="flex justify-between items-center text-xs">
-              <span class="text-slate-400">Soma das Concentrações:</span>
-              <span id="calc-soma-porcentagem" class="font-bold text-sm text-amber-400">0.00%</span>
-            </div>
-            <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-              <div id="calc-bar-porcentagem" class="bg-amber-400 h-full transition-all duration-300" style="width: 0%"></div>
-            </div>
-            <p id="calc-aviso-porcentagem" class="text-[11px] text-slate-500 text-right">O ideal é somar exatamente 100.00%</p>
-          </div>
-
-          <!-- Action: Deduct Stock Button -->
-          <button onclick="executarBaixaEstoque()" id="btn-baixa-estoque" class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold py-3 px-4 rounded-lg text-sm shadow-lg shadow-emerald-950/40 transition-all">
-            <i data-lucide="check-circle-2" class="w-4 h-4"></i>
-            <span>Confirmar Produção & Baixar Estoque</span>
-          </button>
-        </div>
-
-        <!-- Formula Table Component Builder -->
-        <div class="lg:col-span-2 bg-slate-900/80 border border-slate-800 rounded-xl p-5 space-y-4 shadow-xl">
-          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-            <h3 class="font-serif text-lg font-semibold text-slate-100">Componentes da Receita</h3>
-            <button onclick="adicionarLinhaFormula()" class="flex items-center gap-1.5 text-xs bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 px-3 py-1.5 rounded-lg transition-all">
-              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-              <span>Adicionar Ingrediente</span>
-            </button>
-          </div>
-
-          <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-              <thead>
-                <tr class="bg-slate-950/60 border-b border-slate-800 text-[11px] text-slate-400 uppercase tracking-wider">
-                  <th class="py-2.5 px-3">Ingrediente (Do Estoque)</th>
-                  <th class="py-2.5 px-3 w-28">Proporção (%)</th>
-                  <th class="py-2.5 px-3 w-28 text-right">Pesar (g)</th>
-                  <th class="py-2.5 px-3 text-center">Status Estoque</th>
-                  <th class="py-2.5 px-3 text-right w-12"></th>
-                </tr>
-              </thead>
-              <tbody id="calc-tbody" class="divide-y divide-slate-800/60 text-sm">
-                <!-- Calculated dynamically -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- SECTION 3: CADERNO DE FORMULAS (BIBLIOTECA) -->
-    <section id="section-biblioteca" class="tab-section space-y-6 hidden">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
-        <div>
-          <h2 class="font-serif text-2xl font-bold text-slate-100 flex items-center gap-2">
-            Caderno de Criações
-          </h2>
-          <p class="text-sm text-slate-400">Sua biblioteca de fórmulas salvas, notas olfativas e diário de maturação.</p>
-        </div>
-      </div>
-
-      <!-- Library Grid -->
-      <div id="grid-biblioteca" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <!-- Formulas cards rendered via JS -->
-      </div>
-    </section>
-  </main>
-
-  <!-- MODAL: ADD / EDIT INGREDIENT -->
-  <div id="modal-material" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
-      <h3 id="modal-material-title" class="font-serif text-xl font-bold text-amber-300 mb-4">Novo Insumo</h3>
-      <form id="form-material" onsubmit="salvarMaterial(event)" class="space-y-4">
-        <input type="hidden" id="mat-id">
-        <div>
-          <label class="block text-xs font-medium text-slate-400 mb-1">Nome da Matéria-Prima *</label>
-          <input type="text" id="mat-nome" required placeholder="Ex: Ambroxan, Iso E Super..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500">
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-slate-400 mb-1">Categoria / Acorde *</label>
-          <select id="mat-categoria" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500">
-            <option value="Nota de Topo">Nota de Topo (Saída)</option>
-            <option value="Nota de Coração">Nota de Coração (Corpo)</option>
-            <option value="Nota de Fundo">Nota de Fundo (Fixação)</option>
-            <option value="Solvente">Solvente / Veículo</option>
-            <option value="Acordo Especial">Acordo Especial</option>
-          </select>
-        </div>
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Qtd Atual (g/mL) *</label>
-            <input type="number" id="mat-qtd" step="0.1" min="0" required placeholder="100" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Alerta Mínimo (g/mL) *</label>
-            <input type="number" id="mat-min" step="0.1" min="0" required placeholder="15" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500">
-          </div>
-        </div>
-        <div class="flex justify-end gap-3 pt-4 border-t border-slate-800">
-          <button type="button" onclick="closeModalMaterial()" class="px-4 py-2 text-xs font-medium text-slate-400 hover:text-slate-200 rounded-lg">Cancelar</button>
-          <button type="submit" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold px-4 py-2 rounded-lg text-sm">Salvar Insumo</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- MODAL: SAVE FORMULA TO LIBRARY -->
-  <div id="modal-salvar-formula" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative">
-      <h3 class="font-serif text-xl font-bold text-amber-300 mb-4">Guardar Fórmula no Caderno</h3>
-      <form id="form-salvar-formula" onsubmit="confirmarSalvarFormula(event)" class="space-y-4">
-        <div>
-          <label class="block text-xs font-medium text-slate-400 mb-1">Título do Perfume / Fórmula *</label>
-          <input type="text" id="lib-titulo" required placeholder="Ex: Wood Velvet No. 5" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500">
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-slate-400 mb-1">Descrição / Ideia Criativa</label>
-          <textarea id="lib-descricao" rows="2" placeholder="Ex: Perfume amadeirado quente com toque cítrico cremoso..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500"></textarea>
-        </div>
-        <div class="grid grid-cols-3 gap-2">
-          <div>
-            <label class="block text-[11px] font-medium text-slate-400 mb-1">Saída Dominante</label>
-            <input type="text" id="lib-top-notes" placeholder="Bergamota, Limão" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200">
-          </div>
-          <div>
-            <label class="block text-[11px] font-medium text-slate-400 mb-1">Coração</label>
-            <input type="text" id="lib-heart-notes" placeholder="Jasmim, Pimenta" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200">
-          </div>
-          <div>
-            <label class="block text-[11px] font-medium text-slate-400 mb-1">Fundo</label>
-            <input type="text" id="lib-base-notes" placeholder="Cedro, Amber" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200">
-          </div>
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-slate-400 mb-1">Notas de Maturação / Observações</label>
-          <textarea id="lib-maturacao" rows="2" placeholder="Ex: Deixar em maturação por 21 dias no escuro antes da filtragem." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500"></textarea>
-        </div>
-        <div class="flex justify-end gap-3 pt-4 border-t border-slate-800">
-          <button type="button" onclick="closeModalSalvarFormula()" class="px-4 py-2 text-xs font-medium text-slate-400 hover:text-slate-200 rounded-lg">Cancelar</button>
-          <button type="submit" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold px-4 py-2 rounded-lg text-sm">Salvar no Caderno</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <script>
-    // Initial Seed Data for Perfumery Ingredients
-    const defaultEstoque = [
-      { id: '1', nome: 'Álcool de Cereais (96°)', categoria: 'Solvente', qtd: 2000, min: 500 },
-      { id: '2', nome: 'Iso E Super', categoria: 'Nota de Fundo', qtd: 250, min: 50 },
-      { id: '3', nome: 'Patchouli Essential Oil', categoria: 'Nota de Fundo', qtd: 80, min: 20 },
-      { id: '4', nome: 'Limão Siciliano (OE)', categoria: 'Nota de Topo', qtd: 120, min: 30 },
-      { id: '5', nome: 'Veramoss (Evernyl)', categoria: 'Nota de Fundo', qtd: 45, min: 10 },
-      { id: '6', nome: 'Galaxolide 50%', categoria: 'Nota de Fundo', qtd: 180, min: 40 },
-      { id: '7', nome: 'Hedione', categoria: 'Nota de Coração', qtd: 150, min: 35 },
-      { id: '8', nome: 'Bergamota Calábria (OE)', categoria: 'Nota de Topo', qtd: 90, min: 25 },
-      { id: '9', nome: 'Ambroxan (solução 10%)', categoria: 'Nota de Fundo', qtd: 60, min: 15 }
-    ];
-
-    // Initial Seed Formulas for Library
-    const defaultBiblioteca = [
-      {
-        id: 'f1',
-        titulo: 'Chypre Moderno No. 1',
-        descricao: 'Uma interpretação contemporânea do acorde Chypre com topo vibrante e fundo musgoso profundo.',
-        topNotes: 'Bergamota, Limão',
-        heartNotes: 'Hedione',
-        baseNotes: 'Patchouli, Veramoss, Iso E Super',
-        maturacao: 'Maturar por 30 dias a 15°C.',
-        componentes: [
-          { materialId: '1', pct: 78 },
-          { materialId: '8', pct: 6 },
-          { materialId: '7', pct: 4 },
-          { materialId: '2', pct: 7 },
-          { materialId: '3', pct: 3 },
-          { materialId: '5', pct: 2 }
-        ]
-      }
-    ];
-
-    // State Application Variables
-    let estoque = JSON.parse(localStorage.getItem('perfumaria_estoque')) || defaultEstoque;
-    let biblioteca = JSON.parse(localStorage.getItem('perfumaria_biblioteca')) || defaultBiblioteca;
-    let calculadoraLinhas = [
-      { materialId: '1', pct: 80 },
-      { materialId: '2', pct: 10 },
-      { materialId: '3', pct: 6 },
-      { materialId: '5', pct: 4 }
-    ];
-
-    // On Load Window Initialization
-    window.onload = function() {
-      lucide.createIcons();
-      renderEstoque();
-      renderCalculadora();
-      renderBiblioteca();
-    };
-
-    // Save State to LocalStorage
-    function salvarStateLocal() {
-      localStorage.setItem('perfumaria_estoque', JSON.stringify(estoque));
-      localStorage.setItem('perfumaria_biblioteca', JSON.stringify(biblioteca));
-    }
-
-    // UI Toast Notification Helper
-    function showToast(message, type = 'info') {
-      const container = document.getElementById('toast-container');
-      const toast = document.createElement('div');
-      
-      const colors = {
-        success: 'bg-emerald-950 border-emerald-600 text-emerald-200',
-        error: 'bg-rose-950 border-rose-600 text-rose-200',
-        info: 'bg-slate-900 border-amber-500/50 text-amber-200'
-      };
-
-      toast.className = `pointer-events-auto flex items-center gap-2 border px-4 py-3 rounded-xl shadow-xl text-sm transform transition-all duration-300 translate-y-2 opacity-0 ${colors[type] || colors.info}`;
-      toast.innerHTML = `<span>${message}</span>`;
-      
-      container.appendChild(toast);
-      
-      setTimeout(() => {
-        toast.classList.remove('translate-y-2', 'opacity-0');
-      }, 10);
-
-      setTimeout(() => {
-        toast.classList.add('opacity-0', 'translate-y-2');
-        setTimeout(() => toast.remove(), 300);
-      }, 3500);
-    }
-
-    function switchTab(tabId) {
-      document.querySelectorAll('.tab-section').forEach(sec => sec.classList.add('hidden'));
-      document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('text-amber-400', 'bg-slate-800/80', 'border', 'border-amber-500/30');
-        btn.classList.add('text-slate-400');
-      });
-
-      document.getElementById(`section-${tabId}`).classList.remove('hidden');
-      const activeBtn = document.getElementById(`tab-btn-${tabId}`);
-      activeBtn.classList.add('text-amber-400', 'bg-slate-800/80', 'border', 'border-amber-500/30');
-      activeBtn.classList.remove('text-slate-400');
-
-      if(tabId === 'calculadora') renderCalculadora();
-      if(tabId === 'estoque') renderEstoque();
-      if(tabId === 'biblioteca') renderBiblioteca();
-    }
-
-    function renderEstoque() {
-      const tbody = document.getElementById('tabla-estoque-body');
-      const searchTerm = document.getElementById('search-estoque').value.toLowerCase();
-      tbody.innerHTML = '';
-
-      let totalCount = 0;
-      let fundoCount = 0;
-      let solventesCount = 0;
-      let alertaCount = 0;
-
-      estoque.forEach(item => {
-        totalCount++;
-        if (item.categoria === 'Nota de Fundo') fundoCount++;
-        if (item.categoria === 'Solvente') solventesCount++;
-        const isLow = Number(item.qtd) <= Number(item.min);
-        if (isLow) alertaCount++;
-
-        if (searchTerm && !item.nome.toLowerCase().includes(searchTerm) && !item.categoria.toLowerCase().includes(searchTerm)) {
-          return;
-        }
-
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-slate-800/40 transition-colors';
-
-        tr.innerHTML = `
-          <td class="py-3 px-4 font-medium text-slate-100">${item.nome}</td>
-          <td class="py-3 px-4">
-            <span class="inline-block px-2.5 py-1 text-[11px] rounded-full font-medium ${getCategoriaBadge(item.categoria)}">
-              ${item.categoria}
-            </span>
-          </td>
-          <td class="py-3 px-4 text-right font-mono font-bold ${isLow ? 'text-rose-400' : 'text-slate-200'}">
-            ${Number(item.qtd).toFixed(1)} g
-          </td>
-          <td class="py-3 px-4 text-right font-mono text-slate-400">${Number(item.min).toFixed(1)} g</td>
-          <td class="py-3 px-4 text-center">
-            ${isLow 
-              ? `<span class="inline-flex items-center gap-1 text-xs text-rose-400 font-semibold bg-rose-950/50 px-2 py-0.5 rounded border border-rose-800/40"><i data-lucide="alert-triangle" class="w-3 h-3"></i> Baixo</span>` 
-              : `<span class="inline-flex items-center gap-1 text-xs text-emerald-400 bg-emerald-950/30 px-2 py-0.5 rounded border border-emerald-800/30">OK</span>`
-            }
-          </td>
-          <td class="py-3 px-4 text-right space-x-2">
-            <button onclick="editarMaterial('${item.id}')" class="text-slate-400 hover:text-amber-300 transition-colors p-1" title="Editar">
-              <i data-lucide="pencil" class="w-4 h-4"></i>
-            </button>
-            <button onclick="excluirMaterial('${item.id}')" class="text-slate-400 hover:text-rose-400 transition-colors p-1" title="Excluir">
-              <i data-lucide="trash-2" class="w-4 h-4"></i>
-            </button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      document.getElementById('stat-total-itens').innerText = totalCount;
-      document.getElementById('stat-fundo-itens').innerText = fundoCount;
-      document.getElementById('stat-solventes-itens').innerText = solventesCount;
-      document.getElementById('stat-alerta-itens').innerText = alertaCount;
-      lucide.createIcons();
-    }
-
-    function getCategoriaBadge(cat) {
-      switch(cat) {
-        case 'Nota de Topo': return 'bg-amber-950/60 text-amber-300 border border-amber-800/40';
-        case 'Nota de Coração': return 'bg-purple-950/60 text-purple-300 border border-purple-800/40';
-        case 'Nota de Fundo': return 'bg-amber-900/40 text-amber-400 border border-amber-600/40';
-        case 'Solvente': return 'bg-teal-950/60 text-teal-300 border border-teal-800/40';
-        default: return 'bg-slate-800 text-slate-300';
-      }
-    }
-
-    function openModalMaterial() {
-      document.getElementById('form-material').reset();
-      document.getElementById('mat-id').value = '';
-      document.getElementById('modal-material-title').innerText = 'Novo Insumo';
-      document.getElementById('modal-material').classList.remove('hidden');
-    }
-
-    function closeModalMaterial() {
-      document.getElementById('modal-material').classList.add('hidden');
-    }
-
-    function editarMaterial(id) {
-      const item = estoque.find(m => m.id === id);
-      if (!item) return;
-      document.getElementById('mat-id').value = item.id;
-      document.getElementById('mat-nome').value = item.nome;
-      document.getElementById('mat-categoria').value = item.categoria;
-      document.getElementById('mat-qtd').value = item.qtd;
-      document.getElementById('mat-min').value = item.min;
-      
-      document.getElementById('modal-material-title').innerText = 'Editar Insumo';
-      document.getElementById('modal-material').classList.remove('hidden');
-    }
-
-    function salvarMaterial(e) {
-      e.preventDefault();
-      const id = document.getElementById('mat-id').value;
-      const nome = document.getElementById('mat-nome').value;
-      const categoria = document.getElementById('mat-categoria').value;
-      const qtd = parseFloat(document.getElementById('mat-qtd').value);
-      const min = parseFloat(document.getElementById('mat-min').value);
-
-      if (id) {
-        const index = estoque.findIndex(m => m.id === id);
-        if (index !== -1) estoque[index] = { id, nome, categoria, qtd, min };
-        showToast('Matéria-prima atualizada com sucesso!', 'success');
-      } else {
-        const newId = Date.now().toString();
-        estoque.push({ id: newId, nome, categoria, qtd, min });
-        showToast('Novo insumo adicionado ao estoque!', 'success');
-      }
-
-      salvarStateLocal();
-      closeModalMaterial();
-      renderEstoque();
-    }
-
-    function excluirMaterial(id) {
-      if (!confirm('Deseja realmente remover este ingrediente do seu estoque?')) return;
-      estoque = estoque.filter(m => m.id !== id);
-      salvarStateLocal();
-      renderEstoque();
-      showToast('Ingrediente removido.', 'info');
-    }
-
-    function renderCalculadora() {
-      const tbody = document.getElementById('calc-tbody');
-      tbody.innerHTML = '';
-
-      calculadoraLinhas.forEach((linha, idx) => {
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-slate-800/30';
-
-        // Material Selector Options
-        let options = `<option value="">-- Selecione do Estoque --</option>`;
-        estoque.forEach(mat => {
-          options += `<option value="${mat.id}" ${mat.id === linha.materialId ? 'selected' : ''}>${mat.nome} (${mat.categoria})</option>`;
+            // Adiciona primeira linha inicial na calculadora
+            addCalcRow();
         });
 
-        tr.innerHTML = `
-          <td class="py-2.5 px-3">
-            <select onchange="atualizarLinhaCalc(${idx}, 'materialId', this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500">
-              ${options}
-            </select>
-          </td>
-          <td class="py-2.5 px-3">
-            <div class="relative">
-              <input type="number" step="0.01" min="0" max="100" value="${linha.pct}" oninput="atualizarLinhaCalc(${idx}, 'pct', this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-1.5 text-xs text-amber-300 font-bold pr-6">
-              <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-500">%</span>
-            </div>
-          </td>
-          <td class="py-2.5 px-3 text-right font-mono font-bold text-amber-400" id="calc-peso-row-${idx}">
-            0.00 g
-          </td>
-          <td class="py-2.5 px-3 text-center" id="calc-status-row-${idx}">
-            -
-          </td>
-          <td class="py-2.5 px-3 text-right">
-            <button onclick="removerLinhaFormula(${idx})" class="text-slate-500 hover:text-rose-400 transition-colors p-1">
-              <i data-lucide="x" class="w-4 h-4"></i>
-            </button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
+        // Firebase Firestore Realtime Listeners
+        function initFirebaseListeners() {
+            const { collection, onSnapshot } = window.firestoreTools;
 
-      lucide.createIcons();
-      calcularLote();
-    }
+            // Escuta estoque em tempo real
+            onSnapshot(collection(window.db, "inventory"), (snapshot) => {
+                inventory = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderInventoryTable();
+                updateCalcDropdowns();
+                calculateBatch();
+            });
 
-    function adicionarLinhaFormula() {
-      calculadoraLinhas.push({ materialId: '', pct: 0 });
-      renderCalculadora();
-    }
-
-    function removerLinhaFormula(index) {
-      calculadoraLinhas.splice(index, 1);
-      renderCalculadora();
-    }
-
-    function atualizarLinhaCalc(index, field, value) {
-      if (field === 'pct') value = parseFloat(value) || 0;
-      calculadoraLinhas[index][field] = value;
-      calcularLote();
-    }
-
-    function calcularLote() {
-      const tamanhoLote = parseFloat(document.getElementById('calc-tamanho-lote').value) || 0;
-      let somaPct = 0;
-      let temEstoqueInsuficiente = false;
-
-      calculadoraLinhas.forEach((linha, idx) => {
-        somaPct += Number(linha.pct || 0);
-        const pesoGramas = (tamanhoLote * (linha.pct || 0)) / 100;
-        
-        // Update Weight Cell
-        const pesoElem = document.getElementById(`calc-peso-row-${idx}`);
-        if(pesoElem) pesoElem.innerText = `${pesoGramas.toFixed(2)} g`;
-
-        // Check against current stock
-        const mat = estoque.find(m => m.id === linha.materialId);
-        const statusElem = document.getElementById(`calc-status-row-${idx}`);
-
-        if (statusElem) {
-          if (!mat) {
-            statusElem.innerHTML = `<span class="text-xs text-slate-500">Não Selecionado</span>`;
-          } else if (mat.qtd >= pesoGramas) {
-            statusElem.innerHTML = `<span class="text-[11px] text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-800/30">Disponível (${mat.qtd}g)</span>`;
-          } else {
-            temEstoqueInsuficiente = true;
-            statusElem.innerHTML = `<span class="text-[11px] text-rose-400 bg-rose-950/60 px-2 py-0.5 rounded border border-rose-800/40 font-semibold">⚠️ Insuficiente (${mat.qtd}g)</span>`;
-          }
+            // Escuta fórmulas em tempo real
+            onSnapshot(collection(window.db, "formulas"), (snapshot) => {
+                formulas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderFormulasDropdown();
+                renderFormulasGrid();
+            });
         }
-      });
 
-      // Update Total Percentage Indicators
-      const somaElem = document.getElementById('calc-soma-porcentagem');
-      const barElem = document.getElementById('calc-bar-porcentagem');
-      const avisoElem = document.getElementById('calc-aviso-porcentagem');
+        // Tab Navigation
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active', 'border-gold-500', 'text-gold-400');
+                btn.classList.add('border-transparent', 'text-gray-400');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
 
-      somaElem.innerText = `${somaPct.toFixed(2)}%`;
-      barElem.style.width = `${Math.min(somaPct, 100)}%`;
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            activeBtn.classList.add('active', 'border-gold-500', 'text-gold-400');
+            activeBtn.classList.remove('border-transparent', 'text-gray-400');
 
-      if (Math.abs(somaPct - 100) < 0.01) {
-        somaElem.className = 'font-bold text-sm text-emerald-400';
-        barElem.className = 'bg-emerald-400 h-full transition-all duration-300';
-        avisoElem.innerText = '✅ Proporção perfeita (100%)';
-        avisoElem.className = 'text-[11px] text-emerald-400 text-right font-medium';
-      } else {
-        somaElem.className = 'font-bold text-sm text-amber-400';
-        barElem.className = 'bg-amber-400 h-full transition-all duration-300';
-        avisoElem.innerText = `Diferença de ${(100 - somaPct).toFixed(2)}% para fechar 100%`;
-        avisoElem.className = 'text-[11px] text-amber-400/80 text-right';
-      }
-    }
-
-    function executarBaixaEstoque() {
-      const tamanhoLote = parseFloat(document.getElementById('calc-tamanho-lote').value) || 0;
-      if (tamanhoLote <= 0) {
-        showToast('Defina um tamanho de lote válido.', 'error');
-        return;
-      }
-
-      // Validate stock availability
-      let erros = [];
-      calculadoraLinhas.forEach(linha => {
-        if (!linha.materialId) return;
-        const mat = estoque.find(m => m.id === linha.materialId);
-        const pesoNecessario = (tamanhoLote * linha.pct) / 100;
-        if (mat && mat.qtd < pesoNecessario) {
-          erros.push(`${mat.nome} (Necessário: ${pesoNecessario.toFixed(1)}g, Atual: ${mat.qtd}g)`);
+            document.getElementById(`content-${tabId}`).classList.remove('hidden');
         }
-      });
 
-      if (erros.length > 0) {
-        showToast(`Impossível baixar estoque. Faltam ingredientes:\n${erros.join(', ')}`, 'error');
-        return;
-      }
+        // --- CALCULATOR ENGINE ---
 
-      // Deduct Stock
-      calculadoraLinhas.forEach(linha => {
-        if (!linha.materialId) return;
-        const mat = estoque.find(m => m.id === linha.materialId);
-        const pesoNecessario = (tamanhoLote * linha.pct) / 100;
-        if (mat) {
-          mat.qtd = Math.max(0, mat.qtd - pesoNecessario);
+        function addCalcRow(name = '', percentage = 0) {
+            const rowId = Date.now() + Math.random().toString(36).substring(2, 5);
+            calcRows.push({ id: rowId, name: name, percentage: percentage });
+            renderCalcRows();
         }
-      });
 
-      salvarStateLocal();
-      renderCalculadora();
-      showToast('Lote produzido! Baixa de matérias-primas realizada no estoque.', 'success');
-    }
-
-    function limparCalculadora() {
-      calculadoraLinhas = [];
-      document.getElementById('calc-nome-formula').value = '';
-      renderCalculadora();
-    }
-
-    function renderBiblioteca() {
-      const grid = document.getElementById('grid-biblioteca');
-      grid.innerHTML = '';
-
-      if (biblioteca.length === 0) {
-        grid.innerHTML = `<p class="text-slate-500 text-sm col-span-3 text-center py-10">Nenhuma fórmula salva ainda no seu caderno.</p>`;
-        return;
-      }
-
-      biblioteca.forEach(item => {
-        const card = document.createElement('div');
-        card.className = 'bg-slate-900/80 border border-slate-800 rounded-xl p-5 space-y-4 hover:border-amber-500/40 transition-all shadow-xl flex flex-col justify-between';
-
-        card.innerHTML = `
-          <div class="space-y-3">
-            <div class="flex items-start justify-between">
-              <h3 class="font-serif text-lg font-bold text-amber-200">${item.titulo}</h3>
-              <button onclick="excluirFormula('${item.id}')" class="text-slate-500 hover:text-rose-400 p-1">
-                <i data-lucide="trash-2" class="w-4 h-4"></i>
-              </button>
-            </div>
-            <p class="text-xs text-slate-400 line-clamp-2">${item.descricao || 'Sem descrição.'}</p>
-
-            <!-- Pyramid Notes Badges -->
-            <div class="bg-slate-950/70 rounded-lg p-3 space-y-1.5 text-xs border border-slate-800/60">
-              <div class="flex items-center gap-2"><span class="text-[10px] text-amber-400 font-bold uppercase">Topo:</span> <span class="text-slate-300 truncate">${item.topNotes || '-'}</span></div>
-              <div class="flex items-center gap-2"><span class="text-[10px] text-purple-400 font-bold uppercase">Cor:</span> <span class="text-slate-300 truncate">${item.heartNotes || '-'}</span></div>
-              <div class="flex items-center gap-2"><span class="text-[10px] text-amber-500 font-bold uppercase">Fundo:</span> <span class="text-slate-300 truncate">${item.baseNotes || '-'}</span></div>
-            </div>
-
-            ${item.maturacao ? `<p class="text-[11px] text-amber-400/80 italic">💡 ${item.maturacao}</p>` : ''}
-          </div>
-
-          <button onclick="carregarFormulaNaCalculadora('${item.id}')" class="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-amber-300 font-medium py-2 rounded-lg text-xs transition-all border border-amber-500/30 mt-4">
-            <i data-lucide="play" class="w-3.5 h-3.5"></i>
-            <span>Carregar na Calculadora</span>
-          </button>
-        `;
-        grid.appendChild(card);
-      });
-
-      lucide.createIcons();
-    }
-
-    function abrirModalSalvarFormula() {
-      const nomeActual = document.getElementById('calc-nome-formula').value;
-      document.getElementById('lib-titulo').value = nomeActual;
-      document.getElementById('modal-salvar-formula').classList.remove('hidden');
-    }
-
-    function closeModalSalvarFormula() {
-      document.getElementById('modal-salvar-formula').classList.add('hidden');
-    }
-
-    function confirmarSalvarFormula(e) {
-      e.preventDefault();
-      const titulo = document.getElementById('lib-titulo').value;
-      const descricao = document.getElementById('lib-descricao').value;
-      const topNotes = document.getElementById('lib-top-notes').value;
-      const heartNotes = document.getElementById('lib-heart-notes').value;
-      const baseNotes = document.getElementById('lib-base-notes').value;
-      const maturacao = document.getElementById('lib-maturacao').value;
-
-      const novaFormula = {
-        id: Date.now().toString(),
-        titulo,
-        descricao,
-        topNotes,
-        heartNotes,
-        baseNotes,
-        maturacao,
-        componentes: [...calculadoraLinhas]
-      };
-
-      biblioteca.push(novaFormula);
-      salvarStateLocal();
-      closeModalSalvarFormula();
-      showToast('Fórmula salva no seu Caderno Olfativo!', 'success');
-    }
-
-    function carregarFormulaNaCalculadora(id) {
-      const item = biblioteca.find(b => b.id === id);
-      if (!item) return;
-
-      calculadoraLinhas = JSON.parse(JSON.stringify(item.componentes));
-      document.getElementById('calc-nome-formula').value = item.titulo;
-
-      switchTab('calculadora');
-      showToast(`Fórmula "${item.titulo}" carregada na calculadora!`, 'info');
-    }
-
-    function excluirFormula(id) {
-      if (!confirm('Deseja excluir esta fórmula do caderno?')) return;
-      biblioteca = biblioteca.filter(b => b.id !== id);
-      salvarStateLocal();
-      renderBiblioteca();
-      showToast('Fórmula excluída.', 'info');
-    }
-
-    // Export & Import Backup functions
-    function exportarDados() {
-      const data = {
-        estoque: estoque,
-        biblioteca: biblioteca,
-        exportDate: new Date().toISOString()
-      };
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `maison_gj_backup_${new Date().toISOString().slice(0, 10)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      showToast('Backup baixado com sucesso!', 'success');
-    }
-
-    function importarDados(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        try {
-          const parsed = JSON.parse(evt.target.result);
-          if (parsed.estoque && Array.isArray(parsed.parsed.estoque ? parsed.estoque : [])) {
-            estoque = parsed.estoque;
-          }
-          if (parsed.biblioteca && Array.isArray(parsed.biblioteca)) {
-            biblioteca = parsed.biblioteca;
-          }
-          salvarStateLocal();
-          renderEstoque();
-          renderCalculadora();
-          renderBiblioteca();
-          showToast('Dados importados com sucesso!', 'success');
-        } catch (err) {
-          showToast('Erro ao importar arquivo de backup.', 'error');
+        function removeCalcRow(rowId) {
+            calcRows = calcRows.filter(r => r.id !== rowId);
+            renderCalcRows();
+            calculateBatch();
         }
-      };
-      reader.readAsText(file);
-    }
-  </script>
+
+        function renderCalcRows() {
+            const tbody = document.getElementById('calcTableBody');
+            tbody.innerHTML = '';
+
+            calcRows.forEach((row, index) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-dark-input/40 transition";
+                tr.innerHTML = `
+                    <td class="p-3">
+                        <select onchange="updateCalcRowName('${row.id}', this.value)" class="calc-name-select w-full bg-dark-input border border-dark-border rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-gold-500">
+                            <option value="">-- Selecione o Material --</option>
+                            ${inventory.map(m => `<option value="${m.name}" ${m.name === row.name ? 'selected' : ''}>${m.name} (${m.dilution || 100}%)</option>`).join('')}
+                        </select>
+                    </td>
+                    <td class="p-3">
+                        <input type="number" step="0.01" value="${row.percentage}" oninput="updateCalcRowPercentage('${row.id}', this.value)" class="w-full bg-dark-input border border-dark-border rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-gold-500">
+                    </td>
+                    <td class="p-3 font-bold text-gold-400" id="weight-${row.id}">0.00 g</td>
+                    <td class="p-3 text-gray-400" id="stock-${row.id}">0.00 g</td>
+                    <td class="p-3" id="status-${row.id}">-</td>
+                    <td class="p-3 text-right">
+                        <button onclick="removeCalcRow('${row.id}')" class="text-gray-500 hover:text-red-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            lucide.createIcons();
+            calculateBatch();
+        }
+
+        function updateCalcRowName(rowId, name) {
+            const row = calcRows.find(r => r.id === rowId);
+            if (row) row.name = name;
+            calculateBatch();
+        }
+
+        function updateCalcRowPercentage(rowId, val) {
+            const row = calcRows.find(r => r.id === rowId);
+            if (row) row.percentage = parseFloat(val) || 0;
+            calculateBatch();
+        }
+
+        function calculateBatch() {
+            const batchSize = parseFloat(document.getElementById('calcBatchSize').value) || 0;
+            let totalPercentage = 0;
+            let isViable = true;
+
+            calcRows.forEach(row => {
+                totalPercentage += row.percentage;
+                const requiredWeight = (batchSize * row.percentage) / 100;
+                
+                // Busca estoque disponível
+                const mat = inventory.find(i => i.name === row.name);
+                const availableStock = mat ? parseFloat(mat.stock) : 0;
+
+                // Atualiza elementos DOM
+                const weightElem = document.getElementById(`weight-${row.id}`);
+                const stockElem = document.getElementById(`stock-${row.id}`);
+                const statusElem = document.getElementById(`status-${row.id}`);
+
+                if (weightElem) weightElem.innerText = `${requiredWeight.toFixed(2)} g`;
+                if (stockElem) stockElem.innerText = `${availableStock.toFixed(2)} g`;
+
+                if (statusElem) {
+                    if (!row.name) {
+                        statusElem.innerHTML = `<span class="text-gray-500">-</span>`;
+                    } else if (availableStock >= requiredWeight) {
+                        statusElem.innerHTML = `<span class="text-emerald-400 font-semibold">OK</span>`;
+                    } else {
+                        statusElem.innerHTML = `<span class="text-red-400 font-semibold">FALTA</span>`;
+                        isViable = false;
+                    }
+                }
+            });
+
+            document.getElementById('calcTotalConc').innerText = `${totalPercentage.toFixed(2)}%`;
+            const statusBadge = document.getElementById('calcBatchStatus');
+            
+            if (isViable && calcRows.length > 0) {
+                statusBadge.innerText = "ESTOQUE PRONTO";
+                statusBadge.className = "text-xs font-bold text-emerald-400 mt-1 block";
+            } else {
+                statusBadge.innerText = "INSUFICIENTE";
+                statusBadge.className = "text-xs font-bold text-red-400 mt-1 block";
+            }
+        }
+
+        // Abater Batch do Estoque no Firebase
+        async function deductBatchFromInventory() {
+            const batchSize = parseFloat(document.getElementById('calcBatchSize').value) || 0;
+            const { doc, updateDoc } = window.firestoreTools;
+
+            if (calcRows.length === 0) return alert('Adicione ingredientes à fórmula primeiro.');
+
+            for (let row of calcRows) {
+                if (!row.name) continue;
+                const requiredWeight = (batchSize * row.percentage) / 100;
+                const mat = inventory.find(i => i.name === row.name);
+
+                if (mat) {
+                    const newStock = Math.max(0, parseFloat(mat.stock) - requiredWeight);
+                    await updateDoc(doc(window.db, "inventory", mat.id), { stock: newStock });
+                }
+            }
+
+            alert('Baixa efetuada com sucesso no seu Estoque em nuvem!');
+        }
+
+        // --- INVENTORY MANAGEMENT ---
+
+        function renderInventoryTable() {
+            const searchTerm = document.getElementById('inventorySearch').value.toLowerCase();
+            const tbody = document.getElementById('inventoryTableBody');
+            tbody.innerHTML = '';
+
+            const filtered = inventory.filter(i => i.name.toLowerCase().includes(searchTerm) || i.category.toLowerCase().includes(searchTerm));
+
+            filtered.forEach(item => {
+                const isLowStock = parseFloat(item.stock) <= parseFloat(item.minStock);
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-dark-input/40 transition";
+                tr.innerHTML = `
+                    <td class="p-3 font-semibold text-white">${item.name}</td>
+                    <td class="p-3"><span class="bg-dark-input px-2 py-0.5 rounded border border-dark-border text-gray-300 text-[11px]">${item.category}</span></td>
+                    <td class="p-3 text-gray-400">${item.dilution || 100}%</td>
+                    <td class="p-3 font-bold text-gold-400">${parseFloat(item.stock).toFixed(2)} g</td>
+                    <td class="p-3 text-gray-400">${parseFloat(item.minStock).toFixed(2)} g</td>
+                    <td class="p-3">
+                        ${isLowStock ? '<span class="text-xs bg-red-950/60 text-red-400 border border-red-800/50 px-2 py-0.5 rounded font-medium">REPOR</span>' : '<span class="text-xs bg-emerald-950/60 text-emerald-400 border border-emerald-800/50 px-2 py-0.5 rounded font-medium">OK</span>'}
+                    </td>
+                    <td class="p-3 text-right space-x-2">
+                        <button onclick="editMaterial('${item.id}')" class="text-gray-400 hover:text-white"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                        <button onclick="deleteMaterial('${item.id}')" class="text-gray-500 hover:text-red-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            lucide.createIcons();
+        }
+
+        function openAddMaterialModal() {
+            document.getElementById('materialId').value = '';
+            document.getElementById('materialForm').reset();
+            document.getElementById('modalMaterialTitle').innerText = 'Cadastrar Novo Insumo';
+            document.getElementById('materialModal').classList.remove('hidden');
+        }
+
+        function closeMaterialModal() {
+            document.getElementById('materialModal').classList.add('hidden');
+        }
+
+        async function handleSaveMaterial(e) {
+            e.preventDefault();
+            const { collection, addDoc, doc, updateDoc } = window.firestoreTools;
+
+            const id = document.getElementById('materialId').value;
+            const data = {
+                name: document.getElementById('matName').value,
+                category: document.getElementById('matCategory').value,
+                dilution: parseFloat(document.getElementById('matDilution').value) || 100,
+                stock: parseFloat(document.getElementById('matStock').value) || 0,
+                minStock: parseFloat(document.getElementById('matMinStock').value) || 0
+            };
+
+            if (id) {
+                await updateDoc(doc(window.db, "inventory", id), data);
+            } else {
+                await addDoc(collection(window.db, "inventory"), data);
+            }
+
+            closeMaterialModal();
+        }
+
+        function editMaterial(id) {
+            const mat = inventory.find(i => i.id === id);
+            if (!mat) return;
+
+            document.getElementById('materialId').value = mat.id;
+            document.getElementById('matName').value = mat.name;
+            document.getElementById('matCategory').value = mat.category;
+            document.getElementById('matDilution').value = mat.dilution || 100;
+            document.getElementById('matStock').value = mat.stock;
+            document.getElementById('matMinStock').value = mat.minStock;
+
+            document.getElementById('modalMaterialTitle').innerText = 'Editar Insumo';
+            document.getElementById('materialModal').classList.remove('hidden');
+        }
+
+        async function deleteMaterial(id) {
+            if (confirm('Tem certeza que deseja excluir esta matéria-prima do banco?')) {
+                const { doc, deleteDoc } = window.firestoreTools;
+                await deleteDoc(doc(window.db, "inventory", id));
+            }
+        }
+
+        // --- FORMULAS JOURNAL ---
+
+        async function saveCurrentFormula() {
+            const name = document.getElementById('calcBatchName').value || 'Nova Fórmula';
+            const { collection, addDoc } = window.firestoreTools;
+
+            const formulaData = {
+                name: name,
+                createdAt: new Date().toISOString(),
+                ingredients: calcRows.map(r => ({ name: r.name, percentage: r.percentage }))
+            };
+
+            await addDoc(collection(window.db, "formulas"), formulaData);
+            alert('Fórmula salva com sucesso no Caderno de Fórmulas em nuvem!');
+        }
+
+        function renderFormulasDropdown() {
+            const select = document.getElementById('calcFormulaSelect');
+            select.innerHTML = '<option value="">-- Nova Fórmula do Zero --</option>';
+
+            formulas.forEach(f => {
+                const opt = document.createElement('option');
+                opt.value = f.id;
+                opt.innerText = f.name;
+                select.appendChild(opt);
+            });
+        }
+
+        function loadFormulaIntoCalculator() {
+            const selectedId = document.getElementById('calcFormulaSelect').value;
+            const formula = formulas.find(f => f.id === selectedId);
+
+            if (!formula) return;
+
+            document.getElementById('calcBatchName').value = formula.name;
+            calcRows = formula.ingredients.map(ing => ({
+                id: Date.now() + Math.random().toString(36).substring(2, 5),
+                name: ing.name,
+                percentage: ing.percentage
+            }));
+
+            renderCalcRows();
+        }
+
+        function renderFormulasGrid() {
+            const container = document.getElementById('formulasGrid');
+            container.innerHTML = '';
+
+            formulas.forEach(f => {
+                const card = document.createElement('div');
+                card.className = "bg-dark-card border border-dark-border rounded-xl p-5 space-y-4 hover:border-gold-500/50 transition";
+                card.innerHTML = `
+                    <div class="flex items-center justify-between border-b border-dark-border pb-3">
+                        <h3 class="font-bold text-white text-base">${f.name}</h3>
+                        <button onclick="deleteFormula('${f.id}')" class="text-gray-500 hover:text-red-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div>
+                    <ul class="space-y-1.5 text-xs text-gray-300">
+                        ${f.ingredients.map(i => `<li class="flex justify-between"><span>${i.name}</span><span class="font-semibold text-gold-400">${i.percentage}%</span></li>`).join('')}
+                    </ul>
+                    <button onclick="loadFormulaDirectly('${f.id}')" class="w-full bg-dark-input hover:bg-dark-border text-gold-400 border border-dark-border text-xs py-2 rounded-lg font-medium transition flex items-center justify-center space-x-1">
+                        <i data-lucide="calculator" class="w-3.5 h-3.5"></i>
+                        <span>Carregar na Calculadora</span>
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+
+            lucide.createIcons();
+        }
+
+        function loadFormulaDirectly(id) {
+            switchTab('calculator');
+            document.getElementById('calcFormulaSelect').value = id;
+            loadFormulaIntoCalculator();
+        }
+
+        async function deleteFormula(id) {
+            if (confirm('Deseja excluir esta fórmula?')) {
+                const { doc, deleteDoc } = window.firestoreTools;
+                await deleteDoc(doc(window.db, "formulas", id));
+            }
+        }
+
+        // --- IMPORT / EXPORT BACKUP & EXCEL (.XLSX) ---
+
+        function exportBackup() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ inventory, formulas }, null, 2));
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", `maison_gj_backup_${new Date().toISOString().slice(0,10)}.json`);
+            dlAnchorElem.click();
+        }
+
+        function handleFileImport(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const fileName = file.name.toLowerCase();
+
+            if (fileName.endsWith('.json')) {
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    const data = JSON.parse(event.target.result);
+                    const { collection, addDoc } = window.firestoreTools;
+
+                    if (data.inventory) {
+                        for (let item of data.inventory) {
+                            delete item.id;
+                            await addDoc(collection(window.db, "inventory"), item);
+                        }
+                    }
+                    alert('Backup JSON importado com sucesso para a nuvem!');
+                };
+                reader.readAsText(file);
+            } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    const data = new Uint8Array(event.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const jsonRows = XLSX.utils.sheet_to_json(worksheet);
+
+                    const { collection, addDoc } = window.firestoreTools;
+
+                    for (let row of jsonRows) {
+                        const matName = row['Matéria-Prima'] || row['Nome'] || row['Ingrediente'] || Object.values(row)[0];
+                        const stockVal = parseFloat(row['Estoque'] || row['Quantidade'] || Object.values(row)[1]) || 50;
+
+                        if (matName) {
+                            await addDoc(collection(window.db, "inventory"), {
+                                name: String(matName).trim(),
+                                category: 'Importado Excel',
+                                dilution: 100,
+                                stock: stockVal,
+                                minStock: 10
+                            });
+                        }
+                    }
+                    alert('Planilha Excel (.xlsx) lida e importada com sucesso para seu estoque!');
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        }
+
+        function updateCalcDropdowns() {
+            renderCalcRows();
+        }
+    </script>
 </body>
 </html>
