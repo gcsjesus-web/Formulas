@@ -117,7 +117,6 @@
                         <button onclick="exportBackup()" title="Exportar Backup (JSON)" class="p-2 text-gray-400 hover:text-white rounded-md hover:bg-dark-border transition">
                             <i data-lucide="download" class="w-4 h-4"></i>
                         </button>
-                        <!-- MULTIPLE FILES ACCEPTED HERE -->
                         <label title="Importar Várias Fórmulas (.xlsx)" class="p-2 text-gray-400 hover:text-white rounded-md hover:bg-dark-border transition cursor-pointer">
                             <i data-lucide="upload" class="w-4 h-4"></i>
                             <input type="file" id="importFileInput" accept=".json,.xlsx,.xls" multiple class="hidden" onchange="handleFileImport(event)">
@@ -175,7 +174,7 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-medium text-gray-400 mb-1">Tamanho do Frasco Desejado (Gramos - g)</label>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Tamanho do Frasco Desejado (Gramas - g)</label>
                         <input type="number" id="calcBatchSize" value="30" min="0.001" step="0.001" oninput="calculateBatch()" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold-500 text-gold-400 font-bold text-lg">
                     </div>
 
@@ -294,7 +293,7 @@
                         <i data-lucide="shopping-cart" class="w-5 h-5 text-gold-400"></i>
                         <span>Prioridade de Compras de Matérias-Primas</span>
                     </h2>
-                    <p class="text-xs text-gray-400">Veja quais insumos são os mais usados em todas as suas fórmulas para otimizar suas compras</p>
+                    <p class="text-xs text-gray-400">Clique na matéria-prima para expandir a lista de fórmulas que dependem dela</p>
                 </div>
 
                 <div class="overflow-x-auto custom-scrollbar">
@@ -302,10 +301,10 @@
                         <thead class="bg-dark-input/60 text-gray-400 uppercase tracking-wider text-[10px]">
                             <tr>
                                 <th class="p-3">Matéria-Prima</th>
-                                <th class="p-3">Nº de Fórmulas que Utilizam</th>
-                                <th class="p-3">Fórmulas Onde Aparece</th>
-                                <th class="p-3">Estoque Atual (10%)</th>
+                                <th class="p-3">Fórmulas Utilizadas</th>
+                                <th class="p-3">Estoque Solução 10%</th>
                                 <th class="p-3">Status de Compra</th>
+                                <th class="p-3 text-right">Ação</th>
                             </tr>
                         </thead>
                         <tbody id="analyticsTableBody" class="divide-y divide-dark-border">
@@ -327,6 +326,7 @@
             
             <form id="materialForm" onsubmit="handleSaveMaterial(event)" class="space-y-3">
                 <input type="hidden" id="materialId">
+                <input type="hidden" id="oldMaterialName">
                 <div>
                     <label class="block text-xs font-medium text-gray-400 mb-1">Nome do Insumo</label>
                     <input type="text" id="matName" required placeholder="Ex: Iso E Super" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-gold-500">
@@ -567,8 +567,8 @@
                         ${isLowStock ? '<span class="text-xs bg-red-950/60 text-red-400 border border-red-800/50 px-2 py-0.5 rounded font-medium">REPOR</span>' : '<span class="text-xs bg-emerald-950/60 text-emerald-400 border border-emerald-800/50 px-2 py-0.5 rounded font-medium">OK</span>'}
                     </td>
                     <td class="p-3 text-right space-x-2">
-                        <button onclick="editMaterial('${item.id}')" class="text-gray-400 hover:text-white"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
-                        <button onclick="deleteMaterial('${item.id}')" class="text-gray-500 hover:text-red-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        <button onclick="editMaterial('${item.id}')" title="Editar Material" class="text-gray-400 hover:text-white"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                        <button onclick="deleteMaterial('${item.id}')" title="Excluir Material" class="text-gray-500 hover:text-red-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -579,6 +579,7 @@
 
         function openAddMaterialModal() {
             document.getElementById('materialId').value = '';
+            document.getElementById('oldMaterialName').value = '';
             document.getElementById('materialForm').reset();
             document.getElementById('modalMaterialTitle').innerText = 'Cadastrar Novo Insumo';
             document.getElementById('materialModal').classList.remove('hidden');
@@ -593,8 +594,11 @@
             const { collection, addDoc, doc, updateDoc } = window.firestoreTools;
 
             const id = document.getElementById('materialId').value;
+            const oldName = document.getElementById('oldMaterialName').value;
+            const newName = document.getElementById('matName').value.trim();
+
             const data = {
-                name: document.getElementById('matName').value.trim(),
+                name: newName,
                 category: document.getElementById('matCategory').value,
                 dilution: parseFloat(document.getElementById('matDilution').value) || 10,
                 stock: parseFloat(document.getElementById('matStock').value) || 0,
@@ -604,6 +608,25 @@
             try {
                 if (id) {
                     await updateDoc(doc(window.db, "inventory", id), data);
+
+                    if (oldName && oldName.toLowerCase() !== newName.toLowerCase()) {
+                        for (let formula of formulas) {
+                            let hasChanged = false;
+                            const updatedIngredients = formula.ingredients.map(ing => {
+                                if (ing.name.toLowerCase() === oldName.toLowerCase()) {
+                                    hasChanged = true;
+                                    return { ...ing, name: newName };
+                                }
+                                return ing;
+                            });
+
+                            if (hasChanged) {
+                                await updateDoc(doc(window.db, "formulas", formula.id), {
+                                    ingredients: updatedIngredients
+                                });
+                            }
+                        }
+                    }
                 } else {
                     await addDoc(collection(window.db, "inventory"), data);
                 }
@@ -618,6 +641,7 @@
             if (!mat) return;
 
             document.getElementById('materialId').value = mat.id;
+            document.getElementById('oldMaterialName').value = mat.name;
             document.getElementById('matName').value = mat.name;
             document.getElementById('matCategory').value = mat.category;
             document.getElementById('matDilution').value = mat.dilution || 10;
@@ -695,8 +719,11 @@
                 card.className = "bg-dark-card border border-dark-border rounded-xl p-5 space-y-4 hover:border-gold-500/50 transition";
                 card.innerHTML = `
                     <div class="flex items-center justify-between border-b border-dark-border pb-3">
-                        <h3 class="font-bold text-white text-base">${f.name}</h3>
-                        <button onclick="deleteFormula('${f.id}')" class="text-gray-500 hover:text-red-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        <h3 class="font-bold text-white text-base truncate pr-2" title="${f.name}">${f.name}</h3>
+                        <div class="flex items-center space-x-1 shrink-0">
+                            <button onclick="editFormulaName('${f.id}')" title="Editar Nome da Fórmula" class="text-gray-400 hover:text-white p-1"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                            <button onclick="deleteFormula('${f.id}')" title="Excluir Fórmula" class="text-gray-500 hover:text-red-400 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
                     </div>
                     <ul class="space-y-1.5 text-xs text-gray-300 max-h-48 overflow-y-auto custom-scrollbar pr-1">
                         ${f.ingredients.map(i => `<li class="flex justify-between"><span>${i.name}</span><span class="font-semibold text-gold-400">${Number(parseFloat(i.percentage).toFixed(4))}%</span></li>`).join('')}
@@ -710,6 +737,23 @@
             });
 
             lucide.createIcons();
+        }
+
+        async function editFormulaName(id) {
+            const formula = formulas.find(f => f.id === id);
+            if (!formula) return;
+
+            const newName = prompt('Digite o novo nome para a fórmula:', formula.name);
+            if (newName && newName.trim() !== '' && newName !== formula.name) {
+                try {
+                    const { doc, updateDoc } = window.firestoreTools;
+                    await updateDoc(doc(window.db, "formulas", id), {
+                        name: newName.trim()
+                    });
+                } catch (err) {
+                    alert('Erro ao editar o nome da fórmula: ' + err.message);
+                }
+            }
         }
 
         function loadFormulaDirectly(id) {
@@ -729,7 +773,7 @@
             }
         }
 
-        // ANALYTICS & PURCHASING
+        // ANALYTICS & PURCHASING - VISUAL EXPANSÍVEL (ACCORDION)
         function renderAnalyticsTable() {
             const tbody = document.getElementById('analyticsTableBody');
             if (!tbody) return;
@@ -759,21 +803,30 @@
                 return;
             }
 
-            sortedMaterials.forEach(item => {
+            sortedMaterials.forEach((item, index) => {
                 const matInInv = inventory.find(i => i.name.toLowerCase() === item.name.toLowerCase());
                 const currentStock = matInInv ? parseFloat(matInInv.stock) : 0;
                 const isZeroStock = currentStock === 0;
+                const rowId = `analytics-detail-${index}`;
 
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-dark-input/40 transition";
+                tr.className = "hover:bg-dark-input/40 transition cursor-pointer";
+                tr.onclick = (e) => {
+                    if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'I') {
+                        toggleAnalyticsDetail(rowId);
+                    }
+                };
+
                 tr.innerHTML = `
-                    <td class="p-3 font-semibold text-white">${item.name}</td>
+                    <td class="p-3 font-semibold text-white flex items-center space-x-2">
+                        <i data-lucide="chevron-right" id="icon-${rowId}" class="w-4 h-4 text-gold-400 transition-transform duration-200"></i>
+                        <span>${item.name}</span>
+                    </td>
                     <td class="p-3">
                         <span class="bg-gold-500/10 text-gold-400 border border-gold-500/30 font-bold px-2.5 py-1 rounded-full text-xs">
                             ${item.formulas.length} ${item.formulas.length === 1 ? 'fórmula' : 'fórmulas'}
                         </span>
                     </td>
-                    <td class="p-3 text-gray-300 text-xs">${item.formulas.join(', ')}</td>
                     <td class="p-3 font-bold ${isZeroStock ? 'text-red-400' : 'text-gold-400'}">${currentStock.toFixed(3)} g</td>
                     <td class="p-3">
                         ${isZeroStock ? 
@@ -781,9 +834,45 @@
                             `<span class="text-xs bg-emerald-950/60 text-emerald-400 border border-emerald-800/50 px-2 py-0.5 rounded font-medium">EM ESTOQUE</span>`
                         }
                     </td>
+                    <td class="p-3 text-right">
+                        <button onclick="toggleAnalyticsDetail('${rowId}')" class="text-xs bg-dark-input hover:bg-dark-border text-gold-400 border border-dark-border px-3 py-1 rounded transition">
+                            Ver Fórmulas (${item.formulas.length})
+                        </button>
+                    </td>
                 `;
                 tbody.appendChild(tr);
+
+                // Linha de Detalhe Oculta
+                const trDetail = document.createElement('tr');
+                trDetail.id = rowId;
+                trDetail.className = "hidden bg-dark-bg/80 border-b border-dark-border";
+                trDetail.innerHTML = `
+                    <td colspan="5" class="p-4 pl-10">
+                        <div class="space-y-2">
+                            <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider block">Fórmulas que utilizam "${item.name}":</span>
+                            <div class="flex flex-wrap gap-2">
+                                ${item.formulas.map(fName => `<span class="bg-dark-card border border-dark-border text-white px-3 py-1 rounded-lg text-xs font-medium shadow-sm flex items-center space-x-1.5"><i data-lucide="file-text" class="w-3.5 h-3.5 text-gold-400"></i><span>${fName}</span></span>`).join('')}
+                            </div>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(trDetail);
             });
+
+            lucide.createIcons();
+        }
+
+        function toggleAnalyticsDetail(rowId) {
+            const detailRow = document.getElementById(rowId);
+            const icon = document.getElementById(`icon-${rowId}`);
+
+            if (detailRow.classList.contains('hidden')) {
+                detailRow.classList.remove('hidden');
+                if (icon) icon.style.transform = 'rotate(90deg)';
+            } else {
+                detailRow.classList.add('hidden');
+                if (icon) icon.style.transform = 'rotate(0deg)';
+            }
         }
 
         // LEITOR INTELIGENTE MULTI-ARQUIVOS E MULTI-ABAS
