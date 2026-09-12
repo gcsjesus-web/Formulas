@@ -38,7 +38,7 @@
         }
     </script>
 
-    <!-- SheetJS para ler e importar planilhas Excel .xlsx -->
+    <!-- SheetJS para ler arquivos Excel .xlsx / .xls -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
     <!-- Lucide Icons -->
@@ -84,11 +84,9 @@
             measurementId: "G-LWZ7PXTZ19"
         };
 
-        // Inicializa Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Disponibiliza db globalmente para o script
         window.db = db;
         window.firestoreTools = { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, onSnapshot };
     </script>
@@ -99,7 +97,6 @@
     <header class="bg-dark-card border-b border-dark-border sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
-                <!-- Logo / Title -->
                 <div class="flex items-center space-x-3">
                     <div class="w-10 h-10 rounded-lg bg-gradient-to-tr from-gold-600 to-gold-400 flex items-center justify-center text-black font-bold shadow-lg shadow-gold-600/20">
                         <i data-lucide="flask-conical" class="w-6 h-6"></i>
@@ -110,19 +107,17 @@
                     </div>
                 </div>
 
-                <!-- Sync Status & Cloud Indicator -->
                 <div class="flex items-center space-x-4">
                     <div id="syncStatus" class="flex items-center space-x-2 text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-800/50 px-3 py-1.5 rounded-full">
                         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                         <span class="hidden sm:inline font-medium">Nuvem Sincronizada</span>
                     </div>
 
-                    <!-- Backup Buttons -->
                     <div class="flex items-center space-x-1 bg-dark-input p-1 rounded-lg border border-dark-border">
                         <button onclick="exportBackup()" title="Exportar Backup (JSON)" class="p-2 text-gray-400 hover:text-white rounded-md hover:bg-dark-border transition">
                             <i data-lucide="download" class="w-4 h-4"></i>
                         </button>
-                        <label title="Importar Backup (JSON ou XLSX Excel)" class="p-2 text-gray-400 hover:text-white rounded-md hover:bg-dark-border transition cursor-pointer">
+                        <label title="Importar Excel GCMS (.xlsx)" class="p-2 text-gray-400 hover:text-white rounded-md hover:bg-dark-border transition cursor-pointer">
                             <i data-lucide="upload" class="w-4 h-4"></i>
                             <input type="file" id="importFileInput" accept=".json,.xlsx,.xls" class="hidden" onchange="handleFileImport(event)">
                         </label>
@@ -131,7 +126,6 @@
             </div>
         </div>
 
-        <!-- Navigation Tabs -->
         <div class="bg-dark-bg/60 border-t border-dark-border px-4 sm:px-6 lg:px-8">
             <div class="max-w-7xl mx-auto flex space-x-8">
                 <button onclick="switchTab('calculator')" id="tab-calculator" class="tab-btn active border-b-2 border-gold-500 text-gold-400 py-3 text-sm font-medium flex items-center space-x-2 transition">
@@ -140,7 +134,7 @@
                 </button>
                 <button onclick="switchTab('inventory')" id="tab-inventory" class="tab-btn border-b-2 border-transparent text-gray-400 hover:text-gray-200 py-3 text-sm font-medium flex items-center space-x-2 transition">
                     <i data-lucide="boxes" class="w-4 h-4"></i>
-                    <span>Estoque de Materiais</span>
+                    <span>Estoque de Materiais (10%)</span>
                 </button>
                 <button onclick="switchTab('formulas')" id="tab-formulas" class="tab-btn border-b-2 border-transparent text-gray-400 hover:text-gray-200 py-3 text-sm font-medium flex items-center space-x-2 transition">
                     <i data-lucide="book-open" class="w-4 h-4"></i>
@@ -157,7 +151,6 @@
         <section id="content-calculator" class="tab-content space-y-6">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
-                <!-- Batch Control Panel -->
                 <div class="lg:col-span-1 bg-dark-card border border-dark-border rounded-xl p-5 space-y-4 h-fit">
                     <h2 class="text-base font-semibold text-white flex items-center space-x-2">
                         <i data-lucide="sliders" class="w-5 h-5 text-gold-400"></i>
@@ -173,22 +166,21 @@
 
                     <div>
                         <label class="block text-xs font-medium text-gray-400 mb-1">Nome do Lote / Fragrância</label>
-                        <input type="text" id="calcBatchName" placeholder="Ex: Acordo Cítrico № 4" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold-500">
+                        <input type="text" id="calcBatchName" placeholder="Ex: Rose Of No Man's Land" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold-500">
                     </div>
 
                     <div>
-                        <label class="block text-xs font-medium text-gray-400 mb-1">Tamanho do Lote Desejado (Gramos - g)</label>
-                        <input type="number" id="calcBatchSize" value="100" min="1" oninput="calculateBatch()" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold-500 text-gold-400 font-bold text-lg">
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Tamanho do Frasco Desejado (Gramos - g)</label>
+                        <input type="number" id="calcBatchSize" value="30" min="1" oninput="calculateBatch()" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold-500 text-gold-400 font-bold text-lg">
                     </div>
 
-                    <!-- Batch Summary Cards -->
                     <div class="pt-2 grid grid-cols-2 gap-3">
                         <div class="bg-dark-bg/80 border border-dark-border rounded-lg p-3 text-center">
-                            <span class="block text-xs text-gray-400">Concentração Total</span>
+                            <span class="block text-xs text-gray-400">Soma Proporção</span>
                             <span id="calcTotalConc" class="text-lg font-bold text-white">0%</span>
                         </div>
                         <div class="bg-dark-bg/80 border border-dark-border rounded-lg p-3 text-center">
-                            <span class="block text-xs text-gray-400">Status do Lote</span>
+                            <span class="block text-xs text-gray-400">Status do Estoque</span>
                             <span id="calcBatchStatus" class="text-xs font-bold text-emerald-400 mt-1 block">PRONTO</span>
                         </div>
                     </div>
@@ -196,7 +188,7 @@
                     <div class="pt-2 space-y-2">
                         <button onclick="deductBatchFromInventory()" class="w-full bg-gold-600 hover:bg-gold-500 text-black font-semibold py-2.5 px-4 rounded-lg text-sm transition flex items-center justify-center space-x-2 shadow-lg shadow-gold-600/20">
                             <i data-lucide="check-circle-2" class="w-4 h-4"></i>
-                            <span>Concluir e Dar Baixa no Estoque</span>
+                            <span>Dar Baixa no Estoque (30g)</span>
                         </button>
                         <button onclick="saveCurrentFormula()" class="w-full bg-dark-input hover:bg-dark-border text-gray-200 border border-dark-border font-medium py-2 px-4 rounded-lg text-sm transition flex items-center justify-center space-x-2">
                             <i data-lucide="bookmark-plus" class="w-4 h-4"></i>
@@ -205,12 +197,11 @@
                     </div>
                 </div>
 
-                <!-- Formula Table -->
                 <div class="lg:col-span-2 bg-dark-card border border-dark-border rounded-xl p-5 space-y-4">
                     <div class="flex items-center justify-between">
                         <h2 class="text-base font-semibold text-white flex items-center space-x-2">
                             <i data-lucide="scale" class="w-5 h-5 text-gold-400"></i>
-                            <span>Composição e Pesagem do Lote</span>
+                            <span>Pesagem na Balança (Soluções a 10%)</span>
                         </h2>
                         <button onclick="addCalcRow()" class="text-xs bg-dark-input hover:bg-dark-border text-gold-400 border border-dark-border px-3 py-1.5 rounded-lg transition flex items-center space-x-1">
                             <i data-lucide="plus" class="w-3.5 h-3.5"></i>
@@ -222,16 +213,15 @@
                         <table class="w-full text-left text-xs text-gray-300">
                             <thead class="bg-dark-input/60 text-gray-400 uppercase tracking-wider text-[10px]">
                                 <tr>
-                                    <th class="p-3">Matéria-Prima / Insumo</th>
+                                    <th class="p-3">Matéria-Prima (Diluída a 10%)</th>
                                     <th class="p-3 w-28">% Proporção</th>
-                                    <th class="p-3 w-28">Peso Balança (g)</th>
-                                    <th class="p-3 w-28">Estoque Disponível</th>
-                                    <th class="p-3 w-24">Viabilidade</th>
+                                    <th class="p-3 w-32">Pesar na Balança (g)</th>
+                                    <th class="p-3 w-28">Estoque (10%)</th>
+                                    <th class="p-3 w-24">Status</th>
                                     <th class="p-3 w-10 text-right"></th>
                                 </tr>
                             </thead>
                             <tbody id="calcTableBody" class="divide-y divide-dark-border">
-                                <!-- Dynamic rows -->
                             </tbody>
                         </table>
                     </div>
@@ -245,15 +235,15 @@
             <div class="bg-dark-card border border-dark-border rounded-xl p-5 space-y-5">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                        <h2 class="text-base font-semibold text-white">Estoque de Matérias-Primas</h2>
-                        <p class="text-xs text-gray-400">Gerencie o saldo e disponibilidade dos seus insumos aromáticos</p>
+                        <h2 class="text-base font-semibold text-white">Estoque de Matérias-Primas Diluídas (10%)</h2>
+                        <p class="text-xs text-gray-400">Gerencie o saldo de cada solução diluída a 10% pronta para uso</p>
                     </div>
 
                     <div class="flex items-center space-x-3">
                         <input type="text" id="inventorySearch" oninput="renderInventoryTable()" placeholder="Buscar material..." class="bg-dark-input border border-dark-border rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-gold-500 w-48">
                         <button onclick="openAddMaterialModal()" class="bg-gold-600 hover:bg-gold-500 text-black font-semibold px-4 py-2 rounded-lg text-xs transition flex items-center space-x-1">
                             <i data-lucide="plus" class="w-4 h-4"></i>
-                            <span>Cadastrar Novo Material</span>
+                            <span>Cadastrar Novo Insumo</span>
                         </button>
                     </div>
                 </div>
@@ -263,16 +253,15 @@
                         <thead class="bg-dark-input/60 text-gray-400 uppercase tracking-wider text-[10px]">
                             <tr>
                                 <th class="p-3">Nome da Matéria-Prima</th>
-                                <th class="p-3">Categoria / Família</th>
+                                <th class="p-3">Categoria</th>
                                 <th class="p-3">Diluição %</th>
-                                <th class="p-3">Estoque Atual (g)</th>
-                                <th class="p-3">Estoque Mínimo (g)</th>
+                                <th class="p-3">Estoque Solução (g)</th>
+                                <th class="p-3">Mínimo (g)</th>
                                 <th class="p-3">Status</th>
                                 <th class="p-3 text-right">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="inventoryTableBody" class="divide-y divide-dark-border">
-                            <!-- Dynamic rows -->
                         </tbody>
                     </table>
                 </div>
@@ -284,12 +273,11 @@
             <div class="flex items-center justify-between">
                 <div>
                     <h2 class="text-base font-semibold text-white">Caderno de Fórmulas</h2>
-                    <p class="text-xs text-gray-400">Sua biblioteca pessoal de criações olfativas</p>
+                    <p class="text-xs text-gray-400">Sua biblioteca de receitas importadas e criadas</p>
                 </div>
             </div>
 
             <div id="formulasGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                <!-- Formula Cards -->
             </div>
         </section>
 
@@ -323,16 +311,16 @@
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-400 mb-1">Concentração/Diluição %</label>
-                        <input type="number" id="matDilution" value="100" min="0.1" max="100" step="0.1" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-gold-500">
+                        <input type="number" id="matDilution" value="10" min="0.1" max="100" step="0.1" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-gold-500">
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-medium text-gray-400 mb-1">Quantidade em Estoque (g)</label>
-                        <input type="number" id="matStock" required value="0" min="0" step="0.01" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-gold-500">
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Estoque da Solução 10% (g)</label>
+                        <input type="number" id="matStock" required value="100" min="0" step="0.01" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-gold-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-400 mb-1">Estoque Mínimo (Alerta g)</label>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Estoque Mínimo (g)</label>
                         <input type="number" id="matMinStock" value="10" min="0" step="0.01" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-gold-500">
                     </div>
                 </div>
@@ -345,18 +333,15 @@
         </div>
     </div>
 
-    <!-- Application Script Logic -->
+    <!-- Script Logic -->
     <script>
-        // State variables
         let inventory = [];
         let formulas = [];
         let calcRows = [];
 
-        // App Initialization
         window.addEventListener('load', () => {
             lucide.createIcons();
 
-            // Aguarda inicialização do Firebase
             const checkFirebase = setInterval(() => {
                 if (window.db) {
                     clearInterval(checkFirebase);
@@ -364,15 +349,12 @@
                 }
             }, 100);
 
-            // Adiciona primeira linha inicial na calculadora
             addCalcRow();
         });
 
-        // Firebase Firestore Realtime Listeners
         function initFirebaseListeners() {
             const { collection, onSnapshot } = window.firestoreTools;
 
-            // Escuta estoque em tempo real
             onSnapshot(collection(window.db, "inventory"), (snapshot) => {
                 inventory = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderInventoryTable();
@@ -380,7 +362,6 @@
                 calculateBatch();
             });
 
-            // Escuta fórmulas em tempo real
             onSnapshot(collection(window.db, "formulas"), (snapshot) => {
                 formulas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderFormulasDropdown();
@@ -388,7 +369,6 @@
             });
         }
 
-        // Tab Navigation
         function switchTab(tabId) {
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.classList.remove('active', 'border-gold-500', 'text-gold-400');
@@ -403,8 +383,7 @@
             document.getElementById(`content-${tabId}`).classList.remove('hidden');
         }
 
-        // --- CALCULATOR ENGINE ---
-
+        // CALCULATOR ENGINE
         function addCalcRow(name = '', percentage = 0) {
             const rowId = Date.now() + Math.random().toString(36).substring(2, 5);
             calcRows.push({ id: rowId, name: name, percentage: percentage });
@@ -421,14 +400,14 @@
             const tbody = document.getElementById('calcTableBody');
             tbody.innerHTML = '';
 
-            calcRows.forEach((row, index) => {
+            calcRows.forEach((row) => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-dark-input/40 transition";
                 tr.innerHTML = `
                     <td class="p-3">
                         <select onchange="updateCalcRowName('${row.id}', this.value)" class="calc-name-select w-full bg-dark-input border border-dark-border rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-gold-500">
                             <option value="">-- Selecione o Material --</option>
-                            ${inventory.map(m => `<option value="${m.name}" ${m.name === row.name ? 'selected' : ''}>${m.name} (${m.dilution || 100}%)</option>`).join('')}
+                            ${inventory.map(m => `<option value="${m.name}" ${m.name === row.name ? 'selected' : ''}>${m.name} (${m.dilution || 10}%)</option>`).join('')}
                         </select>
                     </td>
                     <td class="p-3">
@@ -461,7 +440,7 @@
         }
 
         function calculateBatch() {
-            const batchSize = parseFloat(document.getElementById('calcBatchSize').value) || 0;
+            const batchSize = parseFloat(document.getElementById('calcBatchSize').value) || 30;
             let totalPercentage = 0;
             let isViable = true;
 
@@ -469,16 +448,14 @@
                 totalPercentage += row.percentage;
                 const requiredWeight = (batchSize * row.percentage) / 100;
                 
-                // Busca estoque disponível
                 const mat = inventory.find(i => i.name === row.name);
                 const availableStock = mat ? parseFloat(mat.stock) : 0;
 
-                // Atualiza elementos DOM
                 const weightElem = document.getElementById(`weight-${row.id}`);
                 const stockElem = document.getElementById(`stock-${row.id}`);
                 const statusElem = document.getElementById(`status-${row.id}`);
 
-                if (weightElem) weightElem.innerText = `${requiredWeight.toFixed(2)} g`;
+                if (weightElem) weightElem.innerText = `${requiredWeight.toFixed(3)} g`;
                 if (stockElem) stockElem.innerText = `${availableStock.toFixed(2)} g`;
 
                 if (statusElem) {
@@ -505,9 +482,8 @@
             }
         }
 
-        // Abater Batch do Estoque no Firebase
         async function deductBatchFromInventory() {
-            const batchSize = parseFloat(document.getElementById('calcBatchSize').value) || 0;
+            const batchSize = parseFloat(document.getElementById('calcBatchSize').value) || 30;
             const { doc, updateDoc } = window.firestoreTools;
 
             if (calcRows.length === 0) return alert('Adicione ingredientes à fórmula primeiro.');
@@ -526,8 +502,7 @@
             alert('Baixa efetuada com sucesso no seu Estoque em nuvem!');
         }
 
-        // --- INVENTORY MANAGEMENT ---
-
+        // INVENTORY MANAGEMENT
         function renderInventoryTable() {
             const searchTerm = document.getElementById('inventorySearch').value.toLowerCase();
             const tbody = document.getElementById('inventoryTableBody');
@@ -542,7 +517,7 @@
                 tr.innerHTML = `
                     <td class="p-3 font-semibold text-white">${item.name}</td>
                     <td class="p-3"><span class="bg-dark-input px-2 py-0.5 rounded border border-dark-border text-gray-300 text-[11px]">${item.category}</span></td>
-                    <td class="p-3 text-gray-400">${item.dilution || 100}%</td>
+                    <td class="p-3 text-gray-400">${item.dilution || 10}%</td>
                     <td class="p-3 font-bold text-gold-400">${parseFloat(item.stock).toFixed(2)} g</td>
                     <td class="p-3 text-gray-400">${parseFloat(item.minStock).toFixed(2)} g</td>
                     <td class="p-3">
@@ -578,7 +553,7 @@
             const data = {
                 name: document.getElementById('matName').value,
                 category: document.getElementById('matCategory').value,
-                dilution: parseFloat(document.getElementById('matDilution').value) || 100,
+                dilution: parseFloat(document.getElementById('matDilution').value) || 10,
                 stock: parseFloat(document.getElementById('matStock').value) || 0,
                 minStock: parseFloat(document.getElementById('matMinStock').value) || 0
             };
@@ -599,7 +574,7 @@
             document.getElementById('materialId').value = mat.id;
             document.getElementById('matName').value = mat.name;
             document.getElementById('matCategory').value = mat.category;
-            document.getElementById('matDilution').value = mat.dilution || 100;
+            document.getElementById('matDilution').value = mat.dilution || 10;
             document.getElementById('matStock').value = mat.stock;
             document.getElementById('matMinStock').value = mat.minStock;
 
@@ -614,8 +589,7 @@
             }
         }
 
-        // --- FORMULAS JOURNAL ---
-
+        // FORMULAS JOURNAL
         async function saveCurrentFormula() {
             const name = document.getElementById('calcBatchName').value || 'Nova Fórmula';
             const { collection, addDoc } = window.firestoreTools;
@@ -675,7 +649,7 @@
                     </ul>
                     <button onclick="loadFormulaDirectly('${f.id}')" class="w-full bg-dark-input hover:bg-dark-border text-gold-400 border border-dark-border text-xs py-2 rounded-lg font-medium transition flex items-center justify-center space-x-1">
                         <i data-lucide="calculator" class="w-3.5 h-3.5"></i>
-                        <span>Carregar na Calculadora</span>
+                        <span>Carregar na Calculadora (30g)</span>
                     </button>
                 `;
                 container.appendChild(card);
@@ -697,8 +671,7 @@
             }
         }
 
-        // --- IMPORT / EXPORT BACKUP & EXCEL (.XLSX) ---
-
+        // LEITOR INTELIGENTE GCMS EXCEL
         function exportBackup() {
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ inventory, formulas }, null, 2));
             const dlAnchorElem = document.createElement('a');
@@ -716,44 +689,99 @@
             if (fileName.endsWith('.json')) {
                 const reader = new FileReader();
                 reader.onload = async (event) => {
-                    const data = JSON.parse(event.target.result);
-                    const { collection, addDoc } = window.firestoreTools;
+                    try {
+                        const data = JSON.parse(event.target.result);
+                        const { collection, addDoc } = window.firestoreTools;
 
-                    if (data.inventory) {
-                        for (let item of data.inventory) {
-                            delete item.id;
-                            await addDoc(collection(window.db, "inventory"), item);
+                        if (data.inventory) {
+                            for (let item of data.inventory) {
+                                delete item.id;
+                                await addDoc(collection(window.db, "inventory"), item);
+                            }
                         }
+                        alert('Backup JSON importado com sucesso!');
+                    } catch (err) {
+                        alert('Erro ao ler arquivo JSON.');
                     }
-                    alert('Backup JSON importado com sucesso para a nuvem!');
                 };
                 reader.readAsText(file);
             } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
                 const reader = new FileReader();
                 reader.onload = async (event) => {
-                    const data = new Uint8Array(event.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    const firstSheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[firstSheetName];
-                    const jsonRows = XLSX.utils.sheet_to_json(worksheet);
+                    try {
+                        const data = new Uint8Array(event.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const firstSheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[firstSheetName];
+                        
+                        const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                        
+                        if (rows.length === 0) return alert('Planilha vazia.');
 
-                    const { collection, addDoc } = window.firestoreTools;
+                        const { collection, addDoc } = window.firestoreTools;
+                        let formulaIngredients = [];
+                        let isReadingData = false;
 
-                    for (let row of jsonRows) {
-                        const matName = row['Matéria-Prima'] || row['Nome'] || row['Ingrediente'] || Object.values(row)[0];
-                        const stockVal = parseFloat(row['Estoque'] || row['Quantidade'] || Object.values(row)[1]) || 50;
+                        const formulaName = file.name.replace(/\.[^/.]+$/, "");
 
-                        if (matName) {
-                            await addDoc(collection(window.db, "inventory"), {
-                                name: String(matName).trim(),
-                                category: 'Importado Excel',
-                                dilution: 100,
-                                stock: stockVal,
-                                minStock: 10
-                            });
+                        for (let i = 0; i < rows.length; i++) {
+                            const row = rows[i];
+                            if (!row || row.length === 0) continue;
+
+                            const rawName = String(row[0] || '').trim();
+                            const rawVal = parseFloat(row[1]);
+
+                            // Detecta início da tabela (linha após Product Name)
+                            if (rawName.toLowerCase().includes('product name')) {
+                                isReadingData = true;
+                                continue;
+                            }
+
+                            // Detecta fim da tabela (linha Total)
+                            if (rawName.toLowerCase() === 'total') {
+                                isReadingData = false;
+                                break;
+                            }
+
+                            if (isReadingData && rawName && !isNaN(rawVal)) {
+                                // Converte por mil (‰) para porcentagem (%)
+                                const percentage = rawVal / 10;
+
+                                // Cadastra no estoque como solução a 10% caso não exista
+                                const exists = inventory.find(inv => inv.name.toLowerCase() === rawName.toLowerCase());
+                                if (!exists) {
+                                    await addDoc(collection(window.db, "inventory"), {
+                                        name: rawName,
+                                        category: 'Sintético / OE',
+                                        dilution: 10,
+                                        stock: 100, // Inicia com 100g de estoque padrão
+                                        minStock: 10
+                                    });
+                                }
+
+                                formulaIngredients.push({
+                                    name: rawName,
+                                    percentage: percentage
+                                });
+                            }
                         }
+
+                        if (formulaIngredients.length > 0) {
+                            await addDoc(collection(window.db, "formulas"), {
+                                name: formulaName,
+                                createdAt: new Date().toISOString(),
+                                ingredients: formulaIngredients
+                            });
+
+                            alert(`Fórmula "${formulaName}" importada com sucesso!\n${formulaIngredients.length} matérias-primas lidas e adicionadas ao Estoque (10%).`);
+                        } else {
+                            alert('Não foi possível identificar a estrutura GCMS na planilha.');
+                        }
+
+                    } catch (err) {
+                        console.error(err);
+                        alert('Erro ao ler a planilha Excel: ' + err.message);
                     }
-                    alert('Planilha Excel (.xlsx) lida e importada com sucesso para seu estoque!');
                 };
                 reader.readAsArrayBuffer(file);
             }
